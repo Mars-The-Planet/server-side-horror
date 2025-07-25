@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "serversidehorror:village_old_plains",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 34,
+    "separation": 8,
+    "salt": 2000
+  }
+}

@@ -3,7 +3,7 @@
   "fallback": "minecraft:empty",
   "elements": [
     {
-      "weight": 3,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/hut_1",
@@ -12,7 +12,7 @@
       }
     },
     {
-      "weight": 15,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/hut_2",
@@ -30,7 +30,7 @@
       }
     },
     {
-      "weight": 4,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/small_house_2",
@@ -40,7 +40,7 @@
     },
 
     {
-      "weight": 2,
+      "weight": 3,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/big_house",
@@ -50,7 +50,7 @@
     },
 
     {
-      "weight": 4,
+      "weight": 3,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/butcher",
@@ -59,7 +59,7 @@
       }
     },
     {
-      "weight": 20,
+      "weight": 3,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/library",
@@ -69,7 +69,7 @@
     },
 
     {
-      "weight": 20,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/church",
@@ -79,7 +79,7 @@
     },
 
     {
-      "weight": 3,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/farm_big",
@@ -88,7 +88,7 @@
       }
     },
     {
-      "weight": 3,
+      "weight": 2,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/farm_small",
@@ -98,7 +98,7 @@
     },
 
     {
-      "weight": 15,
+      "weight": 1,
       "element": {
         "element_type": "minecraft:legacy_single_pool_element",
         "location": "serversidehorror:village_old/plains/houses/blacksmith",
@@ -108,7 +108,7 @@
     },
 
     {
-      "weight": 20,
+      "weight": 30,
       "element": {
         "element_type": "minecraft:empty_pool_element"
       }

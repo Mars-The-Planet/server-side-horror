@@ -5,8 +5,8 @@
     {
       "weight": 2,
       "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_1",
+        "element_type": "minecraft:legacy_single_pool_element",
+        "location": "serversidehorror:village_old/plains/streets/straight_t",
         "projection": "terrain_matching",
         "processors": "minecraft:empty"
       }
@@ -14,35 +14,8 @@
     {
       "weight": 2,
       "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_2",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_3",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_4",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_5",
+        "element_type": "minecraft:legacy_single_pool_element",
+        "location": "serversidehorror:village_old/plains/streets/straight",
         "projection": "terrain_matching",
         "processors": "minecraft:empty"
       }
@@ -50,48 +23,7 @@
     {
       "weight": 1,
       "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight_empty",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/straight",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/l_mid",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/l_big",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
-      }
-    },
-
-    {
-      "weight": 2,
-      "element": {
-        "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:village_old/plains/streets/t",
-        "projection": "terrain_matching",
-        "processors": "minecraft:empty"
+        "element_type": "minecraft:empty_pool_element"
       }
     }
   ]

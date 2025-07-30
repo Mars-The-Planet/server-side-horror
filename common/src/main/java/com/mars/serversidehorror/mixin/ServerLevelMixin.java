@@ -15,16 +15,16 @@ import java.util.function.BooleanSupplier;
 
 import static com.mars.serversidehorror.CommonClass.*;
 import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
-import static com.mars.serversidehorror.ServersideHorrorConfig.long_night_chance;
-import static com.mars.serversidehorror.ServersideHorrorConfig.long_night_enable;
+import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
     @Inject(at = @At("HEAD"), method = "tick")
     private void tickServer(BooleanSupplier hasTimeLeft, CallbackInfo info) {
         ServerLevel self = (ServerLevel)(Object)this;
-        TickRateManager tickratemanager = self.tickRateManager();
+        if(!isGracePeriodUp(grace_period, self)) return;
 
+        TickRateManager tickratemanager = self.tickRateManager();
         if(!tickratemanager.runsNormally())
             return;
 

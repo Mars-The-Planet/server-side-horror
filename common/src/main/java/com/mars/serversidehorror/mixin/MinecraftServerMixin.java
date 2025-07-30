@@ -15,7 +15,6 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
@@ -46,6 +45,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Shadow @Final private RandomSource random;
     @Unique private static int last_torch_breaking = 0;
     @Unique private static int last_torch_replaced = 0;
+    @Unique private static int last_fake_block_broken = 0;
 
     public MinecraftServerMixin(String name) {
         super(name);
@@ -129,14 +129,30 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 last_torch_replaced--;
         }
 
+        if(!BLOCKS_TO_BE_MINED_FAKE.isEmpty()){
+            if(last_fake_block_broken == 0){
+                Map.Entry<BlockPos, ServerPlayer> nextTorch = BLOCKS_TO_BE_MINED_FAKE.entrySet().iterator().next();
+                BlockPos blockPos = nextTorch.getKey();
+                ServerPlayer target = nextTorch.getValue();
+                ServerLevel level = target.serverLevel();
+                level.playSound(null, target.getOnPos(), level.getBlockState(target.getOnPos()).getSoundType().getBreakSound(), SoundSource.BLOCKS, 1, 1);
+                BLOCKS_TO_BE_MINED_FAKE.remove(target);
+                last_fake_block_broken = 10;
+            }
+            else
+                last_fake_block_broken--;
+        }
+
         // player looked at a fake player, start removal timer
         for (ServerPlayer real : this.getPlayerList().getPlayers()) {
             for (ServerPlayer fake : FAKE_PLAYERS.keySet()) {
                 if (isLookingAt(real, fake) && FAKE_PLAYERS.get(fake) > 10) {
-                    FAKE_PLAYERS.put(fake, 7);
+                    FAKE_PLAYERS.put(fake, 10);
                 }
             }
         }
+
+        if(!isGracePeriodUp(grace_period, self.overworld())) return;
 
         // adds a fake player to the tab with a fake join msg
         if (fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
@@ -149,6 +165,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
         // TESTING
         if (this.tickCount % 100 != 0) return;
+//        this.getPlayerList().getPlayers().forEach(target -> fakeMining(target));
 //        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
 
 //        this.getPlayerList().getPlayers().forEach(target -> TO_BE_JUMP_SCARED.add(target));
@@ -181,6 +198,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         double distanceBetween = vec31.length();
         vec31 = vec31.normalize();
         double d1 = vec3.dot(vec31);
-        return d1 > (double) 1.0F - 0.2 / distanceBetween ? real.hasLineOfSight(fake) : false;
+        return d1 > (double) 1 - 3.5F / distanceBetween && real.hasLineOfSight(fake);
     }
 }

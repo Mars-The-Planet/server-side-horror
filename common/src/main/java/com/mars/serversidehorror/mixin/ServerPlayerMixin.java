@@ -20,6 +20,7 @@ public class ServerPlayerMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void tick(CallbackInfo ci) {
         ServerPlayer self = (ServerPlayer)(Object)this;
+        if(!isGracePeriodUp(grace_period, self.serverLevel())) return;
 
         if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self))
             spawnFakePlayer(self, "MarsThePlanet_", 20, true);
@@ -38,6 +39,9 @@ public class ServerPlayerMixin {
 
         if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))
             TO_BE_HIT_BY_LIGHTNING.remove(self);
+
+        if(fake_mining_enable && chanceOneIn(fake_mining_chance) && !FAKE_PLAYERS.containsKey(self))
+            fakeMining(self);
 
         // checking if the players is not moving so they could be jump scared
         double x = self.getX();

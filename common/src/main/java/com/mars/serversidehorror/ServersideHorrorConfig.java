@@ -5,7 +5,7 @@ import com.mars.deimos.config.DeimosConfig;
 public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static int grace_period = 3;
 
-    @Entry public static int herobrine_starer_chance = 180000;
+    @Entry public static int herobrine_starer_chance = 120000;
     @Entry public static boolean herobrine_starer_enable = true;
 
     @Entry public static int fake_joiner_chance = 720000;
@@ -25,4 +25,7 @@ public class ServersideHorrorConfig extends DeimosConfig {
 
     @Entry public static int random_lightning_chance = 1800000;
     @Entry public static boolean random_lightning_enable = true;
+
+    @Entry public static int fake_mining_chance = 1000000;
+    @Entry public static boolean fake_mining_enable = true;
 }

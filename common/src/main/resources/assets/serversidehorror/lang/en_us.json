@@ -22,5 +22,8 @@
   "serversidehorror.deimosconfig.replace_torches_enable": "Disable replacing random torches",
 
   "serversidehorror.deimosconfig.random_lightning_chance": "Chance a player to be striken by a lightning per tick",
-  "serversidehorror.deimosconfig.random_lightning_enable": "Disable random players being striken by a lighting"
+  "serversidehorror.deimosconfig.random_lightning_enable": "Disable random players being striken by a lighting",
+
+  "serversidehorror.deimosconfig.fake_mining_chance": "Chance for a player to hear fake mining noises per tick",
+  "serversidehorror.deimosconfig.fake_mining_enable": "Disable players hearing fake mining noises"
 }

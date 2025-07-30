@@ -7,8 +7,11 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
@@ -23,21 +26,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.GameProfileCache;
-import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.monster.piglin.Piglin;
-import net.minecraft.world.entity.monster.piglin.PiglinAi;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -64,6 +61,7 @@ public class CommonClass{
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_BROKEN = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_REPLACED = new HashMap<>();
     public static List<ServerPlayer> TO_BE_HIT_BY_LIGHTNING = new ArrayList<>();
+    public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_MINED_FAKE = new HashMap<>();
 
     public static RandomSource random = RandomSource.create();
 
@@ -262,6 +260,47 @@ public class CommonClass{
         spawnFakePlayer(target, "MarsThePlanet_", 20, true);
     }
 
+    public static boolean hitPlayerLightning(ServerPlayer target) {
+        ServerLevel level = target.serverLevel();
+        if(!level.canSeeSky(target.blockPosition())) return false;
+        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
+        lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
+        level.addFreshEntity(lightningbolt);
+        spawnFakePlayer(target, "MarsThePlanet_", 20, true);
+        return true;
+    }
+
+    public static void fakeMining(ServerPlayer target) {
+        ServerLevel level = target.serverLevel();
+
+        List<BlockPos> validPos = new ArrayList<>();
+        int radius = 20;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos candidate = target.getOnPos().offset(dx, dy, dz);
+                    if(level.isEmptyBlock(candidate)) continue;
+                    if(level.isEmptyBlock(candidate.above())) continue;
+                    if(level.isEmptyBlock(candidate.below())) continue;
+                    if(level.isEmptyBlock(candidate.west())) continue;
+                    if(level.isEmptyBlock(candidate.east())) continue;
+                    if(level.isEmptyBlock(candidate.north())) continue;
+                    if(level.isEmptyBlock(candidate.south())) continue;
+                    if(candidate.distToCenterSqr(target.getX(), target.getY(), target.getZ()) < 11) continue;
+                    validPos.add(candidate);
+                }
+            }
+        }
+        if(validPos.isEmpty())  return;
+        Direction dir = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+        BlockPos.MutableBlockPos pos = validPos.get(random.nextInt(validPos.size())).mutable();
+        for (int i = 0; i < random.nextInt(10); i++) {
+            pos.move(dir);
+            BLOCKS_TO_BE_MINED_FAKE.put(pos, target);
+            BLOCKS_TO_BE_MINED_FAKE.put(pos.above(), target);
+        }
+    }
+
     public static List<BlockPos> getTorchesInRadius(ServerPlayer player, BlockPos centre, ServerLevel level, int minRange, int maxRange){
         List<BlockPos> torches = new ArrayList<>();
         BlockPos aMax = centre.offset(-maxRange, -maxRange, -maxRange);
@@ -376,18 +415,12 @@ public class CommonClass{
         }
 
         if (valid.isEmpty()) return Optional.empty();
-        // picks a random one of the valid spots
+        // picks a random one from the valid spots
         return Optional.of(valid.get(random.nextInt(valid.size())));
     }
 
-    public static boolean hitPlayerLightning(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
-        if(!level.canSeeSky(player.blockPosition())) return false;
-        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
-        lightningbolt.moveTo(Vec3.atBottomCenterOf(player.blockPosition()));
-        level.addFreshEntity(lightningbolt);
-        spawnFakePlayer(player, "MarsThePlanet_", 20, true);
-        return true;
+    public static boolean isGracePeriodUp(int period, ServerLevel level) {
+        return level.getLevelData().getGameTime() > period * 24000L;
     }
 }
 

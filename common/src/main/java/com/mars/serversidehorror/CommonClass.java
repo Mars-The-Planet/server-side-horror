@@ -30,6 +30,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.monster.piglin.Piglin;
 import net.minecraft.world.entity.monster.piglin.PiglinAi;
 import net.minecraft.world.entity.player.Player;
@@ -61,6 +63,7 @@ public class CommonClass{
     public static List<ServerPlayer> TO_BE_JUMP_SCARED = new ArrayList<>();
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_BROKEN = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_REPLACED = new HashMap<>();
+    public static List<ServerPlayer> TO_BE_HIT_BY_LIGHTNING = new ArrayList<>();
 
     public static RandomSource random = RandomSource.create();
 
@@ -84,14 +87,14 @@ public class CommonClass{
 
         // Herobrines face pixel by pixel RGB
         float[][][] herobrineFace = {
-                {{0.18f,0.122f,0.035f},{0.165f,0.11f,0.035f},{0.18f,0.114f,0.047f},{0.153f,0.102f,0.024f},{0.133f,0.082f,0.012f},{0.145f,0.098f,0.024f},{0.165f,0.11f,0.035f},{0.161f,0.11f,0.035f}},
-                {{0.165f,0.11f,0.035f},{0.165f,0.11f,0.035f},{0.165f,0.11f,0.035f},{0.192f,0.133f,0.059f},{0.259f,0.161f,0.059f},{0.247f,0.161f,0.075f},{0.169f,0.11f,0.035f},{0.153f,0.102f,0.024f}},
-                {{0.165f,0.11f,0.035f},{0.714f,0.537f,0.42f},{0.741f,0.557f,0.443f},{0.776f,0.588f,0.502f},{0.741f,0.545f,0.443f},{0.741f,0.557f,0.455f},{0.675f,0.463f,0.353f},{0.196f,0.141f,0.059f}},
-                {{0.667f,0.49f,0.4f},{0.706f,0.518f,0.424f},{0.667f,0.49f,0.4f},{0.678f,0.502f,0.424f},{0.612f,0.443f,0.361f},{0.733f,0.537f,0.443f},{0.612f,0.412f,0.298f},{0.612f,0.412f,0.298f}},
-                {{0.706f,0.518f,0.424f},{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f},{0.71f,0.482f,0.404f},{0.733f,0.537f,0.443f},{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f},{0.667f,0.49f,0.4f}},
-                {{0.612f,0.388f,0.278f},{0.702f,0.482f,0.384f},{0.718f,0.51f,0.443f},{0.412f,0.247f,0.184f},{0.412f,0.247f,0.184f},{0.745f,0.533f,0.42f},{0.635f,0.412f,0.278f},{0.502f,0.325f,0.196f}},
-                {{0.565f,0.369f,0.263f},{0.588f,0.373f,0.247f},{0.255f,0.125f,0.035f},{0.541f,0.298f,0.235f},{0.541f,0.298f,0.235f},{0.271f,0.125f,0.035f},{0.561f,0.369f,0.239f},{0.506f,0.325f,0.22f}},
-                {{0.431f,0.271f,0.169f},{0.424f,0.263f,0.161f},{0.255f,0.125f,0.035f},{0.259f,0.11f,0.024f},{0.271f,0.125f,0.035f},{0.271f,0.125f,0.035f},{0.514f,0.333f,0.227f},{0.478f,0.306f,0.192f}}
+                {{0.18f, 0.122f, 0.035f}, {0.165f, 0.11f, 0.035f}, {0.18f, 0.114f, 0.047f}, {0.153f, 0.102f, 0.024f}, {0.133f, 0.082f, 0.012f}, {0.145f, 0.098f, 0.024f}, {0.165f, 0.11f, 0.035f}, {0.161f, 0.11f, 0.035f}},
+                {{0.165f, 0.11f, 0.035f}, {0.165f, 0.11f, 0.035f}, {0.165f, 0.11f, 0.035f}, {0.192f, 0.133f, 0.059f}, {0.259f, 0.161f, 0.059f}, {0.247f, 0.161f, 0.075f}, {0.169f, 0.11f, 0.035f}, {0.153f, 0.102f, 0.024f}},
+                {{0.165f, 0.11f, 0.035f}, {0.714f, 0.537f, 0.42f}, {0.741f, 0.557f, 0.443f}, {0.776f, 0.588f, 0.502f}, {0.741f, 0.545f, 0.443f}, {0.741f, 0.557f, 0.455f}, {0.675f, 0.463f, 0.353f}, {0.196f, 0.141f, 0.059f}},
+                {{0.667f, 0.49f, 0.4f}, {0.706f, 0.518f, 0.424f}, {0.667f, 0.49f, 0.4f}, {0.678f, 0.502f, 0.424f}, {0.612f, 0.443f, 0.361f}, {0.733f, 0.537f, 0.443f}, {0.612f, 0.412f, 0.298f}, {0.612f, 0.412f, 0.298f}},
+                {{0.706f, 0.518f, 0.424f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.71f, 0.482f, 0.404f}, {0.733f, 0.537f, 0.443f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.667f, 0.49f, 0.4f}},
+                {{0.612f, 0.388f, 0.278f}, {0.702f, 0.482f, 0.384f}, {0.718f, 0.51f, 0.443f}, {0.412f, 0.247f, 0.184f}, {0.412f, 0.247f, 0.184f}, {0.745f, 0.533f, 0.42f}, {0.635f, 0.412f, 0.278f}, {0.502f, 0.325f, 0.196f}},
+                {{0.565f, 0.369f, 0.263f}, {0.588f, 0.373f, 0.247f}, {0.255f, 0.125f, 0.035f}, {0.541f, 0.298f, 0.235f}, {0.541f, 0.298f, 0.235f}, {0.271f, 0.125f, 0.035f}, {0.561f, 0.369f, 0.239f}, {0.506f, 0.325f, 0.22f}},
+                {{0.431f, 0.271f, 0.169f}, {0.424f, 0.263f, 0.161f}, {0.255f, 0.125f, 0.035f}, {0.259f, 0.11f, 0.024f}, {0.271f, 0.125f, 0.035f}, {0.271f, 0.125f, 0.035f}, {0.514f, 0.333f, 0.227f}, {0.478f, 0.306f, 0.192f}}
         };
 
         List<Vec3> eyes = new ArrayList<>();
@@ -376,4 +379,18 @@ public class CommonClass{
         // picks a random one of the valid spots
         return Optional.of(valid.get(random.nextInt(valid.size())));
     }
+
+    public static boolean hitPlayerLightning(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if(!level.canSeeSky(player.blockPosition())) return false;
+        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
+        lightningbolt.moveTo(Vec3.atBottomCenterOf(player.blockPosition()));
+        level.addFreshEntity(lightningbolt);
+        spawnFakePlayer(player, "MarsThePlanet_", 20, true);
+        return true;
+    }
 }
+
+
+
+

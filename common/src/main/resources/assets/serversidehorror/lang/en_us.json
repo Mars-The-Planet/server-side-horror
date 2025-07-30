@@ -1,6 +1,8 @@
 {
   "serversidehorror.deimosconfig.title": "Sever Side Horror Config",
 
+  "serversidehorror.deimosconfig.grace_period": "Delay in days at the start of the game before this mod starts being active",
+
   "serversidehorror.deimosconfig.herobrine_starer_chance": "Chance of spawning Herobrine staring at you per tick",
   "serversidehorror.deimosconfig.herobrine_starer_enable": "Disable spawning Herobrine staring at you",
 
@@ -17,5 +19,8 @@
   "serversidehorror.deimosconfig.break_torches_enable": "Disable destroying random torches",
 
   "serversidehorror.deimosconfig.replace_torches_chance": "Chance a for torches to ger replaced by redstone ones per tick",
-  "serversidehorror.deimosconfig.replace_torches_enable": "Disable replacing random torches"
+  "serversidehorror.deimosconfig.replace_torches_enable": "Disable replacing random torches",
+
+  "serversidehorror.deimosconfig.random_lightning_chance": "Chance a player to be striken by a lightning per tick",
+  "serversidehorror.deimosconfig.random_lightning_enable": "Disable random players being striken by a lighting"
 }

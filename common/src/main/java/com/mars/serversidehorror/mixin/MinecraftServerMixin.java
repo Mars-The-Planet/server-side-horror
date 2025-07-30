@@ -54,7 +54,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Inject(at = @At("HEAD"), method = "tickServer")
     private void tickServer(BooleanSupplier hasTimeLeft, CallbackInfo info) {
         MinecraftServer self = (MinecraftServer) (Object) this;
-        
+
         // remove fake players
         Iterator<Map.Entry<ServerPlayer, Integer>> lifeTimeIt = FAKE_PLAYERS.entrySet().iterator();
         while (lifeTimeIt.hasNext()) {
@@ -105,8 +105,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 ServerLevel level = nextTorch.getValue().serverLevel();
                 BlockPos target = nextTorch.getKey();
                 level.destroyBlock(target, true);
-                //level.setBlock(target, Blocks.AIR.defaultBlockState(), 3);
-                //level.playSound(null, target, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1f, 0.8f);
                 TORCHES_TO_BE_BROKEN.remove(target);
                 last_torch_breaking = 10;
             }
@@ -149,9 +147,9 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             }
         }
 
-        // asi presunout do ServerPlayerMixin
+        // TESTING
         if (this.tickCount % 100 != 0) return;
-
+//        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
 
 //        this.getPlayerList().getPlayers().forEach(target -> TO_BE_JUMP_SCARED.add(target));
 

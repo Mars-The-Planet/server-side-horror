@@ -21,21 +21,23 @@ public class ServerPlayerMixin {
     private void tick(CallbackInfo ci) {
         ServerPlayer self = (ServerPlayer)(Object)this;
 
-        if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self)){
+        if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self))
             spawnFakePlayer(self, "MarsThePlanet_", 20, true);
-        }
 
-        if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self)){
+        if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self))
             TO_BE_JUMP_SCARED.add(self);
-        }
 
-        if(break_torches_enable && chanceOneIn(break_torches_chance) && !FAKE_PLAYERS.containsKey(self)){
+        if(break_torches_enable && chanceOneIn(break_torches_chance) && !FAKE_PLAYERS.containsKey(self))
             breakTorches(self, 10, 30);
-        }
 
-        if(replace_torches_enable && chanceOneIn(replace_torches_chance) && !FAKE_PLAYERS.containsKey(self)){
+        if(replace_torches_enable && chanceOneIn(replace_torches_chance) && !FAKE_PLAYERS.containsKey(self))
             replaceTorches(self, 30, 60);
-        }
+
+        if(random_lightning_enable && chanceOneIn(random_lightning_chance) && !FAKE_PLAYERS.containsKey(self))
+            TO_BE_HIT_BY_LIGHTNING.add(self);
+
+        if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))
+            TO_BE_HIT_BY_LIGHTNING.remove(self);
 
         // checking if the players is not moving so they could be jump scared
         double x = self.getX();

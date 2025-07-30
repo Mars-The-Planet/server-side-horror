@@ -14,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+// This lets me place blocks over village roads like stairs or roofs which for some reason doest work properly in 1.21
+// I couldn't figure out a consistent way for stairs that lead into village houses to be placed on village roads and not next to them using jigsaw blocks
 // you see the name of this mod is a clever play on words referencing its own code
 @Mixin(AbstractFurnaceBlockEntity.class)
 public abstract class FurnaceBlockEntityMixin {
@@ -22,6 +24,7 @@ public abstract class FurnaceBlockEntityMixin {
         ItemStack stack = blockEntity.getItem(0);
         Direction dir = state.getValue(AbstractFurnaceBlock.FACING);
 
+        // my testing world and also where I could easily copy old village houses
         //https://www.youtube.com/watch?v=ypocJ8Q7jO0
         if(level.getServer().getWorldData().getLevelName().equals("Renovating Villager Houses"))
             return;

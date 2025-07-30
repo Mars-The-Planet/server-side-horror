@@ -7,8 +7,9 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.Connection;
-import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -23,14 +24,26 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.server.players.PlayerList;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
+import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,19 +51,78 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CommonClass {
-    public static final Set<ServerPlayer> FAKE_PLAYERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    public static final Map<ServerPlayer, Integer> FAKE_JOINERS = new HashMap<>();
-    public static Random random = new Random(632);
+public class CommonClass{
+    public static Map<ServerPlayer, Integer> FAKE_PLAYERS = new HashMap<>();
+    public static Map<ServerPlayer, Integer> FAKE_JOINERS = new HashMap<>();
+    public static Map<ServerPlayer, Integer> FAKE_JOINERS_TALKERS = new HashMap<>();
+    public static List<ServerPlayer> TO_BE_JUMP_SCARED = new ArrayList<>();
+    public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_BROKEN = new HashMap<>();
+    public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_REPLACED = new HashMap<>();
+
+    public static RandomSource random = RandomSource.create();
 
     public static void init() {
         DeimosConfig.init(Constants.MOD_ID, ServersideHorrorConfig.class);
     }
 
+    public static void particleJumpScare(ServerPlayer target){
+        ServerLevel level = target.serverLevel();
+
+        Vec3 eyePos = target.getEyePosition(1.0F);
+        Vec3 forward = target.getLookAngle().normalize();
+        Vec3 right = forward.cross(new Vec3(0, 1, 0)).normalize();
+        Vec3 up = right.cross(forward).normalize();
+
+        float spacing = 0.15f;
+        double distance = 1.1;
+        float width = 7 * spacing * 0.5f;
+        float height = 7 * spacing * 0.5f;
+        Vec3 basePos = eyePos.add(forward.scale(distance));
+
+        // Herobrines face pixel by pixel RGB
+        float[][][] herobrineFace = {
+                {{0.18f,0.122f,0.035f},{0.165f,0.11f,0.035f},{0.18f,0.114f,0.047f},{0.153f,0.102f,0.024f},{0.133f,0.082f,0.012f},{0.145f,0.098f,0.024f},{0.165f,0.11f,0.035f},{0.161f,0.11f,0.035f}},
+                {{0.165f,0.11f,0.035f},{0.165f,0.11f,0.035f},{0.165f,0.11f,0.035f},{0.192f,0.133f,0.059f},{0.259f,0.161f,0.059f},{0.247f,0.161f,0.075f},{0.169f,0.11f,0.035f},{0.153f,0.102f,0.024f}},
+                {{0.165f,0.11f,0.035f},{0.714f,0.537f,0.42f},{0.741f,0.557f,0.443f},{0.776f,0.588f,0.502f},{0.741f,0.545f,0.443f},{0.741f,0.557f,0.455f},{0.675f,0.463f,0.353f},{0.196f,0.141f,0.059f}},
+                {{0.667f,0.49f,0.4f},{0.706f,0.518f,0.424f},{0.667f,0.49f,0.4f},{0.678f,0.502f,0.424f},{0.612f,0.443f,0.361f},{0.733f,0.537f,0.443f},{0.612f,0.412f,0.298f},{0.612f,0.412f,0.298f}},
+                {{0.706f,0.518f,0.424f},{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f},{0.71f,0.482f,0.404f},{0.733f,0.537f,0.443f},{1.0f,1.0f,1.0f},{1.0f,1.0f,1.0f},{0.667f,0.49f,0.4f}},
+                {{0.612f,0.388f,0.278f},{0.702f,0.482f,0.384f},{0.718f,0.51f,0.443f},{0.412f,0.247f,0.184f},{0.412f,0.247f,0.184f},{0.745f,0.533f,0.42f},{0.635f,0.412f,0.278f},{0.502f,0.325f,0.196f}},
+                {{0.565f,0.369f,0.263f},{0.588f,0.373f,0.247f},{0.255f,0.125f,0.035f},{0.541f,0.298f,0.235f},{0.541f,0.298f,0.235f},{0.271f,0.125f,0.035f},{0.561f,0.369f,0.239f},{0.506f,0.325f,0.22f}},
+                {{0.431f,0.271f,0.169f},{0.424f,0.263f,0.161f},{0.255f,0.125f,0.035f},{0.259f,0.11f,0.024f},{0.271f,0.125f,0.035f},{0.271f,0.125f,0.035f},{0.514f,0.333f,0.227f},{0.478f,0.306f,0.192f}}
+        };
+
+        List<Vec3> eyes = new ArrayList<>();
+
+        level.playSound(null, target.getOnPos(), SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 1f, 1f);
+
+        for (int i = 0; i < 50; i++) {
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    float r = herobrineFace[y][x][0];
+                    float g = herobrineFace[y][x][1];
+                    float b = herobrineFace[y][x][2];
+                    var dust = new DustParticleOptions(new Vector3f(r, g, b), 1);
+
+                    float offsetX = (x * spacing) - width;
+                    float offsetY = height - (y * spacing);
+                    Vec3 pos = basePos.add(right.scale(offsetX)).add(up.scale(offsetY));
+                    level.sendParticles(target, dust, false, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+
+                    if(r == 1f)
+                        eyes.add(pos);
+                }
+            }
+        }
+
+        // Just eyes
+        for (Vec3 eye : eyes) {
+            var dust = new DustParticleOptions(new Vector3f(1, 1, 1), 1);
+            level.sendParticles(target, dust, false, eye.x, eye.y, eye.z, 1, 0, 0, 0, 0);
+        }
+    }
 
     public static void addFakeJoiner(MinecraftServer server, String name){
         if (server == null) return;
@@ -73,8 +145,13 @@ public class CommonClass {
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(updateList);
 
-        FAKE_JOINERS.put(fake, random.nextInt(60, 2400));
-        // FAKE_JOINERS.put(fake, random.nextInt(20, 40));
+        int lifeTime = random.nextInt(600, 60000);
+        FAKE_JOINERS.put(fake, lifeTime);
+
+        // is talker?
+        if(random.nextBoolean()){
+            FAKE_JOINERS_TALKERS.put(fake, random.nextInt(1, lifeTime - 1));
+        }
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
@@ -83,11 +160,9 @@ public class CommonClass {
 
         ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
         server.getPlayerList().broadcastAll(removeInfo);
-        System.out.println("BAF");
     }
 
-    //TODO: at se namuze spawnout na hraci nebo moc blizko nej
-    public static void spawnFakePlayer(ServerPlayer target, String name, ServerPlayer player) {
+    public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean isHerobrine) {
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
@@ -108,7 +183,7 @@ public class CommonClass {
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
         scoreboard.addPlayerToTeam(name, hideTagTeam);
 
-        Optional<BlockPos> spawnOpt = findValidSpawnPos(level, fake, player, 5);
+        Optional<BlockPos> spawnOpt = findValidSpawnPos(level, fake, target, radius, true);
         double spawnX, spawnY, spawnZ;
         if (spawnOpt.isPresent()) {
             BlockPos spawnPos = spawnOpt.get();
@@ -116,14 +191,14 @@ public class CommonClass {
             spawnY = spawnPos.getY();
             spawnZ = spawnPos.getZ() + 0.5;
         } else {
-            Constants.LOG.info("couldn't find valid location to spawn a fake entity");
+            Constants.LOG.info("couldn't find a valid location to spawn a fake entity");
             return;
         }
 
-        //  look towards player
-        double d0 = player.getX() - spawnX;
-        double d1 = player.getY() - spawnY;
-        double d2 = player.getZ() - spawnZ;
+        // look towards player
+        double d0 = target.getX() - spawnX;
+        double d1 = target.getY() - spawnY;
+        double d2 = target.getZ() - spawnZ;
         double d3 = Math.sqrt(d0 * d0 + d2 * d2);
 
         float xRot = Mth.wrapDegrees((float)(-(Mth.atan2(d1, d3) * 180.0F / (float)Math.PI)));
@@ -136,23 +211,20 @@ public class CommonClass {
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
         ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> { /* no-op */ });
-        FAKE_PLAYERS.add(fake);
+        int lifeTime = 24000;
+        FAKE_PLAYERS.put(fake, lifeTime);
 
         // updated players
         ClientboundAddEntityPacket spawnPacket = (ClientboundAddEntityPacket) fake.getAddEntityPacket(wrapper);
         ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
-        ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
 
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(spawnPacket);
-        server.getPlayerList().broadcastAll(updateList);
 
-        //remove
-        /*ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
-        ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
-        fake.remove(Entity.RemovalReason.DISCARDED);
-        server.getPlayerList().broadcastAll(removeEntity);
-        server.getPlayerList().broadcastAll(removeInfo);*/
+        if(!isHerobrine){
+            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+            server.getPlayerList().broadcastAll(updateList);
+        }
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
@@ -162,6 +234,61 @@ public class CommonClass {
         server.getPlayerList().broadcastAll(removeEntity);
         server.getPlayerList().broadcastAll(removeInfo);
     }
+
+    public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
+        ServerLevel level = target.serverLevel();
+        BlockPos playerPos = target.getOnPos();
+        List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
+        if(torches.isEmpty())   return;
+        BlockPos targetedTorch = torches.get(random.nextInt(torches.size()));
+        TORCHES_TO_BE_BROKEN.put(targetedTorch,target);
+        List<BlockPos> targetedTorches = getTorchesInRadius(target, targetedTorch, level, 0, 15);
+        targetedTorches.forEach(pos -> TORCHES_TO_BE_BROKEN.put(pos, target));
+        spawnFakePlayer(target, "MarsThePlanet_", 20, true);
+    }
+
+    public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
+        ServerLevel level = target.serverLevel();
+        BlockPos playerPos = target.getOnPos();
+        List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
+        if(torches.isEmpty())   return;
+        BlockPos targetedTorch = torches.get(random.nextInt(torches.size()));
+        TORCHES_TO_BE_REPLACED.put(targetedTorch,target);
+        List<BlockPos> targetedTorches = getTorchesInRadius(target, targetedTorch, level, 0, 15);
+        targetedTorches.forEach(pos -> TORCHES_TO_BE_REPLACED.put(pos, target));
+        spawnFakePlayer(target, "MarsThePlanet_", 20, true);
+    }
+
+    public static List<BlockPos> getTorchesInRadius(ServerPlayer player, BlockPos centre, ServerLevel level, int minRange, int maxRange){
+        List<BlockPos> torches = new ArrayList<>();
+        BlockPos aMax = centre.offset(-maxRange, -maxRange, -maxRange);
+        BlockPos bMax = centre.offset( maxRange,  maxRange,  maxRange);
+
+        Iterable<BlockPos> allBlocksInRange = BlockPos.betweenClosed(aMax, bMax);
+        for(BlockPos pos : allBlocksInRange){
+            if((level.getBlockState(pos).is(Blocks.TORCH) || level.getBlockState(pos).is(Blocks.WALL_TORCH)) &&
+                    !pos.closerThan(new Vec3i(centre.getX(), centre.getY(), centre.getZ()), minRange) && !canSeeBlock(player, pos)){
+                torches.add(new BlockPos(pos));
+            }
+        }
+
+        return torches;
+    }
+
+    public static boolean canSeeBlock(ServerPlayer player, BlockPos pos) {
+        ServerLevel world = player.serverLevel();
+        ClipContext ctx = new ClipContext(player.getEyePosition(), Vec3.atCenterOf(pos), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player);
+        HitResult result = world.clip(ctx);
+
+        if (result.getType() == HitResult.Type.MISS) {
+            return true;
+        }
+        if (result.getType() != HitResult.Type.BLOCK) {
+            return false;
+        }
+        return ((BlockHitResult) result).getBlockPos().equals(pos);
+    }
+
 
     public static List<String> getSeenPlayers(MinecraftServer server) {
         Path worldPath = server.getWorldPath(LevelResource.ROOT);
@@ -196,7 +323,10 @@ public class CommonClass {
         return names;
     }
 
-    //https://github.com/mike3132/GalaxyGraves/blob/429b27409335e3c78a43b12d91c184ddaa513384/src/main/java/co/mcGalaxy/galaxyGraves/grave/Npc.java#L89
+    public static boolean chanceOneIn(int denominator){
+        return random.nextInt(denominator) == 0;
+    }
+
     private static String[] getSkin(String name){
         try {
             URL profileUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
@@ -219,7 +349,7 @@ public class CommonClass {
         }
     }
 
-    private static Optional<BlockPos> findValidSpawnPos(ServerLevel level, ServerPlayer fake, ServerPlayer target, int radius) {
+    private static Optional<BlockPos> findValidSpawnPos(ServerLevel level, ServerPlayer fake, ServerPlayer target, int radius, boolean lineOfSight) {
         List<BlockPos> valid = new ArrayList<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
@@ -229,8 +359,13 @@ public class CommonClass {
                     if(!level.isEmptyBlock(candidate)) continue;
                     if(!level.isEmptyBlock(candidate.above())) continue;
                     if(!level.getBlockState(candidate.below()).canOcclude()) continue;
+                    if(target.getOnPos() == candidate) continue;
+                    if(target.getOnPos().east() == candidate) continue;
+                    if(target.getOnPos().north() == candidate) continue;
+                    if(target.getOnPos().south() == candidate) continue;
+                    if(target.getOnPos().west() == candidate) continue;
                     fake.setPos(candidate.getX(), candidate.getY(), candidate.getZ());
-                    if(!fake.hasLineOfSight(target)) continue;
+                    if(lineOfSight != fake.hasLineOfSight(target)) continue;
 
                     valid.add(candidate);
                 }
@@ -238,7 +373,7 @@ public class CommonClass {
         }
 
         if (valid.isEmpty()) return Optional.empty();
-        // pick a random one of the valid spots
+        // picks a random one of the valid spots
         return Optional.of(valid.get(random.nextInt(valid.size())));
     }
 }

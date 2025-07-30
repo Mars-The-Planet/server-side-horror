@@ -1,3 +1,21 @@
 {
-  "serversidehorror.deimosconfig.title": "Sever Side Horror Config"
+  "serversidehorror.deimosconfig.title": "Sever Side Horror Config",
+
+  "serversidehorror.deimosconfig.herobrine_starer_chance": "Chance of spawning Herobrine staring at you per tick",
+  "serversidehorror.deimosconfig.herobrine_starer_enable": "Disable spawning Herobrine staring at you",
+
+  "serversidehorror.deimosconfig.fake_joiner_chance": "Chance of a fake player joining per tick",
+  "serversidehorror.deimosconfig.fake_joiner_enable": "Disable fake player joining",
+
+  "serversidehorror.deimosconfig.jumpscare_chance": "Chance a player being jump scared per tick",
+  "serversidehorror.deimosconfig.jumpscare_enable": "Disable jump scaring players",
+
+  "serversidehorror.deimosconfig.long_night_chance": "Chance a night being long night night",
+  "serversidehorror.deimosconfig.long_night_enable": "Disable nights becoming long nights",
+
+  "serversidehorror.deimosconfig.break_torches_chance": "Chance a for random torches to get destroyed per tick",
+  "serversidehorror.deimosconfig.break_torches_enable": "Disable destroying random torches",
+
+  "serversidehorror.deimosconfig.replace_torches_chance": "Chance a for torches to ger replaced by redstone ones per tick",
+  "serversidehorror.deimosconfig.replace_torches_enable": "Disable replacing random torches"
 }

@@ -17,6 +17,8 @@
 <img src="https://i.imgur.com/efTzcVX.png"/>
 <img src="https://i.imgur.com/AajqWhG.png"/>
 <img src="https://i.imgur.com/RumU43j.png"/>
+<h3>Commands</h3>
+<p>You can use commands to target specific players and active specific events when you want.</p>
 </details>
 <img src="https://i.imgur.com/ovhINHA.png" />
 <p>Q: How does this mod differ from From The Fog? <br>

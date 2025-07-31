@@ -83,6 +83,7 @@ public class CommonClass{
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 literal("addFakeJoiner")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("fakesName", StringArgumentType.word())
                             .executes(ctx -> {
                                 String fakesName = StringArgumentType.getString(ctx, "fakesName");
@@ -93,6 +94,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("spawnFakePlayer")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("fakesName", StringArgumentType.word())
                         .then(Commands.argument("radius", IntegerArgumentType.integer(0))
@@ -109,6 +111,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("hitPlayerLightning")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -119,6 +122,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("particleJumpScare")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -129,19 +133,21 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("setLongNight")
-                            .executes(ctx -> {
-                                MinecraftServer server = ctx.getSource().getServer();
-                                ServerLevel level = server.overworld();
-                                DimensionDataStorage storage = level.getDataStorage();
-                                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-                                savedData.setLongNight(true);
-                                level.setDayTime(17999);
-                                ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
-                                return 1;
-                            }));
+                        .requires(src -> src.hasPermission(2))
+                                .executes(ctx -> {
+                                    MinecraftServer server = ctx.getSource().getServer();
+                                    ServerLevel level = server.overworld();
+                                    DimensionDataStorage storage = level.getDataStorage();
+                                    SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                                    savedData.setLongNight(true);
+                                    level.setDayTime(17999);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
+                                    return 1;
+                                }));
 
         dispatcher.register(
                 literal("breakTorches")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
@@ -156,6 +162,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("replaceTorches")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
@@ -170,6 +177,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("fakeMining")
+                        .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");

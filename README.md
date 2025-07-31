@@ -28,7 +28,7 @@ A: Yes, even tho this mod has been made as a submission for the 2025 Serverside 
 <p>Q: How were the odds for the events calculated? <br>
 A: I wanted everyone to experience each event at least twice in a two week minecraft faze but at the same time to not be spammed by the events. So I assumed that the most extreme two week minecraft faze will have 5 hours of playtime per day which means 15 in game days or 360000 ticks and from that assumption I kind of guesstimated the odds.</p>
 <img src="https://i.imgur.com/3KIkKfi.png" />
-<p>I made this mod as a submission for the <a href="https://neoforged.net/news/2025serversidesummer/">2025 Serverside Summer Modjam</a>. And I actually forgot about the jam and only remembered a week before the deadline, but I think the mod turned out pretty well in the end and also forced to learn new things and look at them from different perspective. If you experience any bugs or other issues please report them with a log.</p>
+<p>I made this mod as a submission for the <a href="https://neoforged.net/news/2025serversidesummer/">2025 Serverside Summer Modjam</a>. And I actually forgot about the jam and only remembered a week before the deadline, but I think the mod turned out pretty well in the end. It also forced me to learn new things and look at them from a different perspective. If you experience any bugs or other issues, please report them with a log.</p>
 <center><p style="text-align: center;">
 <img src="https://i.imgur.com/JNZ2GMV.png"/>
 <a href="https://www.curseforge.com/minecraft/mc-mods/deimos-fabric-forge-neoforge" rel="nofollow">

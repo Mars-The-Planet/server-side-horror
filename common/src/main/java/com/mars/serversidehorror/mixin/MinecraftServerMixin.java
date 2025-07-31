@@ -99,8 +99,8 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             }
         }
 
-        if(!TORCHES_TO_BE_BROKEN.isEmpty()){
-            if(last_torch_breaking == 0){
+        if(!TORCHES_TO_BE_BROKEN.isEmpty()) {
+            if(last_torch_breaking == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_BROKEN.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().serverLevel();
                 BlockPos target = nextTorch.getKey();
@@ -112,8 +112,8 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 last_torch_breaking--;
         }
 
-        if(!TORCHES_TO_BE_REPLACED.isEmpty()){
-            if(last_torch_replaced == 0){
+        if(!TORCHES_TO_BE_REPLACED.isEmpty()) {
+            if(last_torch_replaced == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_REPLACED.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().serverLevel();
                 BlockPos target = nextTorch.getKey();
@@ -129,13 +129,12 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 last_torch_replaced--;
         }
 
-        if(!BLOCKS_TO_BE_MINED_FAKE.isEmpty()){
-            if(last_fake_block_broken == 0){
-                Map.Entry<BlockPos, ServerPlayer> nextTorch = BLOCKS_TO_BE_MINED_FAKE.entrySet().iterator().next();
-                BlockPos blockPos = nextTorch.getKey();
-                ServerPlayer target = nextTorch.getValue();
-                ServerLevel level = target.serverLevel();
-                level.playSound(null, target.getOnPos(), level.getBlockState(target.getOnPos()).getSoundType().getBreakSound(), SoundSource.BLOCKS, 1, 1);
+        if(!BLOCKS_TO_BE_MINED_FAKE.isEmpty()) {
+            if(last_fake_block_broken == 0) {
+                Map.Entry<BlockPos, ServerPlayer> nextBlock = BLOCKS_TO_BE_MINED_FAKE.entrySet().iterator().next();
+                BlockPos target = nextBlock.getKey();
+                ServerLevel level = nextBlock.getValue().serverLevel();
+                level.playSound(null, target, level.getBlockState(target).getSoundType().getBreakSound(), SoundSource.BLOCKS, 1, 1);
                 BLOCKS_TO_BE_MINED_FAKE.remove(target);
                 last_fake_block_broken = 10;
             }
@@ -172,11 +171,11 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
 //        List<String> playerNames = getSeenPlayers((MinecraftServer)(Object) this);
 //        playerNames.removeAll(List.of(((MinecraftServer)(Object) this).getPlayerList().getPlayerNamesArray()));
-//        if(!playerNames.isEmpty()){
+//        if(!playerNames.isEmpty()) {
 //            addFakeJoiner((MinecraftServer)(Object) this, playerNames.get(random.nextInt(playerNames.size())));
 //        }
 
-//        if(fake_joiner_enable && chanceOneIn(fake_joiner_chance)){
+//        if(fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
 //            for (ServerPlayer player : this.getPlayerList().getPlayers()) {
 //                if(FAKE_PLAYERS.containsKey(player))  return;
 //                spawnFakePlayer(player, "MarsThePlanet_", 20, true);

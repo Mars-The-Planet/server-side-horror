@@ -5,13 +5,18 @@ import com.google.gson.JsonParser;
 import com.mars.deimos.config.DeimosConfig;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
@@ -35,6 +40,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -53,6 +60,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mars.serversidehorror.CommonClass.breakTorches;
+import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
+import static net.minecraft.commands.Commands.literal;
+
 public class CommonClass{
     public static Map<ServerPlayer, Integer> FAKE_PLAYERS = new HashMap<>();
     public static Map<ServerPlayer, Integer> FAKE_JOINERS = new HashMap<>();
@@ -67,6 +78,105 @@ public class CommonClass{
 
     public static void init() {
         DeimosConfig.init(Constants.MOD_ID, ServersideHorrorConfig.class);
+    }
+
+    public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
+                literal("addFakeJoiner")
+                        .then(Commands.argument("fakesName", StringArgumentType.word())
+                            .executes(ctx -> {
+                                String fakesName = StringArgumentType.getString(ctx, "fakesName");
+                                addFakeJoiner(ctx.getSource().getServer(), fakesName);
+                                ctx.getSource().sendSuccess(() -> Component.literal("Added a fake player " + fakesName), true);
+                                return 1;
+                            })));
+
+        dispatcher.register(
+                literal("spawnFakePlayer")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("fakesName", StringArgumentType.word())
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("hideNametag", BoolArgumentType.bool())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    String fakesName = StringArgumentType.getString(ctx, "fakesName");
+                                    int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                    boolean hideNametag = BoolArgumentType.getBool(ctx, "hideNametag");
+                                    targets.forEach(target -> spawnFakePlayer(target, fakesName, radius, hideNametag));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Spawned a fake player " + fakesName), true);
+                                    return 1;
+                                }))))));
+
+        dispatcher.register(
+                literal("hitPlayerLightning")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    TO_BE_HIT_BY_LIGHTNING.addAll(targets);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Hit players with lightning"), true);
+                                    return 1;
+                                })));
+
+        dispatcher.register(
+                literal("particleJumpScare")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    TO_BE_JUMP_SCARED.addAll(targets);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Jumped scared players"), true);
+                                    return 1;
+                                })));
+
+        dispatcher.register(
+                literal("setLongNight")
+                            .executes(ctx -> {
+                                MinecraftServer server = ctx.getSource().getServer();
+                                ServerLevel level = server.overworld();
+                                DimensionDataStorage storage = level.getDataStorage();
+                                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                                savedData.setLongNight(true);
+                                level.setDayTime(17999);
+                                ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
+                                return 1;
+                            }));
+
+        dispatcher.register(
+                literal("breakTorches")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                    targets.forEach(target -> breakTorches(target, minRadius, maxRadius));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Broke torches near players"), true);
+                                    return 1;
+                                })))));
+
+        dispatcher.register(
+                literal("replaceTorches")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                    targets.forEach(target -> replaceTorches(target, minRadius, maxRadius));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Replaced torches near players by redstone torches"), true);
+                                    return 1;
+                                })))));
+
+        dispatcher.register(
+                literal("fakeMining")
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    targets.forEach(target -> fakeMining(target));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake mining noises"), true);
+                                    return 1;
+                                })));
     }
 
     public static void particleJumpScare(ServerPlayer target){
@@ -274,7 +384,7 @@ public class CommonClass{
         ServerLevel level = target.serverLevel();
 
         List<BlockPos> validPos = new ArrayList<>();
-        int radius = 20;
+        int radius = 10;
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -radius; dy <= radius; dy++) {
                 for (int dz = -radius; dz <= radius; dz++) {
@@ -296,8 +406,8 @@ public class CommonClass{
         BlockPos.MutableBlockPos pos = validPos.get(random.nextInt(validPos.size())).mutable();
         for (int i = 0; i < random.nextInt(10); i++) {
             pos.move(dir);
-            BLOCKS_TO_BE_MINED_FAKE.put(pos, target);
-            BLOCKS_TO_BE_MINED_FAKE.put(pos.above(), target);
+            BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos), target);
+            BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos.above()), target);
         }
     }
 

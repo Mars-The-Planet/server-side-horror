@@ -18,7 +18,15 @@
 <img src="https://i.imgur.com/AajqWhG.png"/>
 <img src="https://i.imgur.com/RumU43j.png"/>
 <h3>Commands</h3>
-<p>You can use commands to target specific players and active specific events when you want.</p>
+<p>You can use commands to target specific players and activate  specific events when you want.</p>
+<p><code>/addFakeJoiner &lt;fakesName&gt;</code></p>
+<p><code>/spawnFakePlayer &lt;targets&gt; &lt;fakesName&gt; &lt;radius&gt; &lt;hideNametag&gt;</code></p>
+<p><code>/hitPlayerLightning &lt;targets&gt;</code></p>
+<p><code>/particleJumpScare &lt;targets&gt;</code></p>
+<p><code>/setLongNight</code></p>
+<p><code>/breakTorches &lt;targets&gt; &lt;minRadius&gt; &lt;maxRadius&gt;</code></p>
+<p><code>/replaceTorches &lt;targets&gt; &lt;minRadius&gt; &lt;maxRadius&gt;</code></p>
+<p><code>/fakeMining &lt;targets&gt; </code></p>
 </details>
 <img src="https://i.imgur.com/ovhINHA.png" />
 <p>Q: How does this mod differ from From The Fog? <br>

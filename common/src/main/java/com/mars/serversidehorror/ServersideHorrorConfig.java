@@ -28,4 +28,6 @@ public class ServersideHorrorConfig extends DeimosConfig {
 
     @Entry public static int fake_mining_chance = 1000000;
     @Entry public static boolean fake_mining_enable = true;
+
+    @Entry public static boolean old_villages_enable = true;
 }

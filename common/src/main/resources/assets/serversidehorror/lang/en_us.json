@@ -1,29 +1,35 @@
 {
   "serversidehorror.deimosconfig.title": "Sever Side Horror Config",
 
+
   "serversidehorror.deimosconfig.grace_period": "Delay in days at the start of the game before this mod starts being active",
 
   "serversidehorror.deimosconfig.herobrine_starer_chance": "Chance of spawning Herobrine staring at you per tick",
-  "serversidehorror.deimosconfig.herobrine_starer_enable": "Disable spawning Herobrine staring at you",
+  "serversidehorror.deimosconfig.herobrine_starer_enable": "Enable spawning Herobrine staring at you",
 
   "serversidehorror.deimosconfig.fake_joiner_chance": "Chance of a fake player joining per tick",
-  "serversidehorror.deimosconfig.fake_joiner_enable": "Disable fake player joining",
+  "serversidehorror.deimosconfig.fake_joiner_enable": "Enable fake player joining",
 
   "serversidehorror.deimosconfig.jumpscare_chance": "Chance a player being jump scared per tick",
-  "serversidehorror.deimosconfig.jumpscare_enable": "Disable jump scaring players",
+  "serversidehorror.deimosconfig.jumpscare_enable": "Enable jump scaring players",
 
   "serversidehorror.deimosconfig.long_night_chance": "Chance a night being long night night",
-  "serversidehorror.deimosconfig.long_night_enable": "Disable nights becoming long nights",
+  "serversidehorror.deimosconfig.long_night_enable": "Enable nights becoming long nights",
 
   "serversidehorror.deimosconfig.break_torches_chance": "Chance a for random torches to get destroyed per tick",
-  "serversidehorror.deimosconfig.break_torches_enable": "Disable destroying random torches",
+  "serversidehorror.deimosconfig.break_torches_enable": "Enable destroying random torches",
 
   "serversidehorror.deimosconfig.replace_torches_chance": "Chance a for torches to ger replaced by redstone ones per tick",
-  "serversidehorror.deimosconfig.replace_torches_enable": "Disable replacing random torches",
+  "serversidehorror.deimosconfig.replace_torches_enable": "Enable replacing random torches",
 
   "serversidehorror.deimosconfig.random_lightning_chance": "Chance a player to be striken by a lightning per tick",
-  "serversidehorror.deimosconfig.random_lightning_enable": "Disable random players being striken by a lighting",
+  "serversidehorror.deimosconfig.random_lightning_enable": "Enable random players being striken by a lighting",
 
   "serversidehorror.deimosconfig.fake_mining_chance": "Chance for a player to hear fake mining noises per tick",
-  "serversidehorror.deimosconfig.fake_mining_enable": "Disable players hearing fake mining noises"
+  "serversidehorror.deimosconfig.fake_mining_enable": "Enable players hearing fake mining noises",
+
+  "serversidehorror.deimosconfig.old_villages_enable": "Enable old villages to appear in your world",
+
+
+  "serversidehorror.commands.locate.structure.disabled": "Couldn't find the structure you were looking for because it was disabled in the config"
 }

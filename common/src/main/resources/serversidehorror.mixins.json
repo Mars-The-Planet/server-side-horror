@@ -6,9 +6,11 @@
   "compatibilityLevel": "JAVA_18",
   "mixins": [
     "FurnaceBlockEntityMixin",
+    "LocateCommandMixin",
     "MinecraftServerMixin",
     "ServerLevelMixin",
-    "ServerPlayerMixin"
+    "ServerPlayerMixin",
+    "StructureMixin"
   ],
   "client": [],
   "server": [],

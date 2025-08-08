@@ -188,6 +188,8 @@ public class CommonClass{
                                 })));
     }
 
+    // ------EVENTS------
+
     public static void particleJumpScare(ServerPlayer target){
         ServerLevel level = target.serverLevel();
 
@@ -445,6 +447,16 @@ public class CommonClass{
             BLOCKS_TO_BE_STEPPED_ON_FAKE.put(new BlockPos(pos), target);
         }
     }
+
+    public static void joinOnBedrock(ServerPlayer target, ServerGamePacketListenerImpl listener) {
+        MinecraftServer server = target.server;
+        BlockPos playerPos = new BlockPos((int)target.getX(), 319, (int)target.getZ());
+
+        server.overworld().setBlock(playerPos, Blocks.BEDROCK.defaultBlockState(), 3);
+        listener.teleport(((int)target.getX()) + 0.5, 320, ((int)target.getZ()) + 0.5, target.getYRot(), target.getXRot());
+    }
+
+    // ------HELPER METHODS------
 
     public static List<BlockPos> getTorchesInRadius(ServerPlayer player, BlockPos centre, ServerLevel level, int minRange, int maxRange){
         List<BlockPos> torches = new ArrayList<>();

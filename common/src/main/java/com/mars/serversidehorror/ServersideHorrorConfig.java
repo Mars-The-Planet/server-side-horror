@@ -26,11 +26,14 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static int random_lightning_chance = 1800000;
     @Entry public static boolean random_lightning_enable = true;
 
-    @Entry public static int fake_mining_chance = 1000000;
+    @Entry public static int fake_mining_chance = 500000;
     @Entry public static boolean fake_mining_enable = true;
 
-    @Entry public static int fake_steps_chance = 1000000;
+    @Entry public static int fake_steps_chance = 500000;
     @Entry public static boolean fake_steps_enable = true;
+
+    @Entry public static int joining_on_bedrock_chance = 100; //3000000
+    @Entry public static boolean joining_on_bedrock_enable = true;
 
     @Entry public static boolean old_villages_enable = true;
     @Entry public static boolean traps_enable = true;

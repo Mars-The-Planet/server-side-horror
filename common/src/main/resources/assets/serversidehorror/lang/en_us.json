@@ -30,6 +30,9 @@
   "serversidehorror.deimosconfig.fake_steps_chance": "Chance for a player to hear fake step noises per tick",
   "serversidehorror.deimosconfig.fake_steps_enable": "Enable players hearing fake step noises",
 
+  "serversidehorror.deimosconfig.joining_on_bedrock_chance": "Chance for a player to rejoin on a block of bedrock at build limit",
+  "serversidehorror.deimosconfig.joining_on_bedrock_enable": "Enable players joining at build limit",
+
   "serversidehorror.deimosconfig.old_villages_enable": "Allow old villages to appear in your world",
   "serversidehorror.deimosconfig.traps_enable": "Allow traps to appear in your world",
 

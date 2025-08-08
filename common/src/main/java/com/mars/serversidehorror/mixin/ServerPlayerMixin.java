@@ -39,6 +39,9 @@ public class ServerPlayerMixin {
 
             if(fake_mining_enable && chanceOneIn(fake_mining_chance) && !FAKE_PLAYERS.containsKey(self))
                 fakeMining(self);
+
+            if(fake_steps_enable && chanceOneIn(fake_steps_chance) && !FAKE_PLAYERS.containsKey(self))
+                fakeSteps(self);
         }
 
         if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))

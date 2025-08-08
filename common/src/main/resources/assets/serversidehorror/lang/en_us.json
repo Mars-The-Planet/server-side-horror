@@ -1,7 +1,6 @@
 {
   "serversidehorror.deimosconfig.title": "Sever Side Horror Config",
 
-
   "serversidehorror.deimosconfig.grace_period": "Delay in days at the start of the game before this mod starts being active",
 
   "serversidehorror.deimosconfig.herobrine_starer_chance": "Chance of spawning Herobrine staring at you per tick",
@@ -28,8 +27,11 @@
   "serversidehorror.deimosconfig.fake_mining_chance": "Chance for a player to hear fake mining noises per tick",
   "serversidehorror.deimosconfig.fake_mining_enable": "Enable players hearing fake mining noises",
 
-  "serversidehorror.deimosconfig.old_villages_enable": "Enable old villages to appear in your world",
+  "serversidehorror.deimosconfig.fake_steps_chance": "Chance for a player to hear fake step noises per tick",
+  "serversidehorror.deimosconfig.fake_steps_enable": "Enable players hearing fake step noises",
 
+  "serversidehorror.deimosconfig.old_villages_enable": "Allow old villages to appear in your world",
+  "serversidehorror.deimosconfig.traps_enable": "Allow traps to appear in your world",
 
   "serversidehorror.commands.locate.structure.disabled": "Couldn't find the structure you were looking for because it was disabled in the config"
 }

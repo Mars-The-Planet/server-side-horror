@@ -46,6 +46,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Unique private static int last_torch_breaking = 0;
     @Unique private static int last_torch_replaced = 0;
     @Unique private static int last_fake_block_broken = 0;
+    @Unique private static int last_fake_block_stepped_on = 0;
 
     public MinecraftServerMixin(String name) {
         super(name);
@@ -142,6 +143,19 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 last_fake_block_broken--;
         }
 
+        if(!BLOCKS_TO_BE_STEPPED_ON_FAKE.isEmpty()) {
+            if(last_fake_block_stepped_on == 0) {
+                Map.Entry<BlockPos, ServerPlayer> nextBlock = BLOCKS_TO_BE_STEPPED_ON_FAKE.entrySet().iterator().next();
+                BlockPos target = nextBlock.getKey();
+                ServerLevel level = nextBlock.getValue().serverLevel();
+                level.playSound(null, target, level.getBlockState(target).getSoundType().getStepSound(), SoundSource.BLOCKS, 1, 1);
+                BLOCKS_TO_BE_STEPPED_ON_FAKE.remove(target);
+                last_fake_block_stepped_on = 7;
+            }
+            else
+                last_fake_block_stepped_on--;
+        }
+
         // player looked at a fake player, start removal timer
         for (ServerPlayer real : this.getPlayerList().getPlayers()) {
             for (ServerPlayer fake : FAKE_PLAYERS.keySet()) {
@@ -164,6 +178,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
         // TESTING
         if (this.tickCount % 100 != 0) return;
+//        this.getPlayerList().getPlayers().forEach(target -> fakeSteps(target));
 //        this.getPlayerList().getPlayers().forEach(target -> fakeMining(target));
 //        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
 

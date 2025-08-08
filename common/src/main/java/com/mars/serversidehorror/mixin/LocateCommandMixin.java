@@ -13,13 +13,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static com.mars.serversidehorror.ServersideHorrorConfig.old_villages_enable;
+import static com.mars.serversidehorror.ServersideHorrorConfig.traps_enable;
 
 @Mixin(LocateCommand.class)
 public class LocateCommandMixin {
     @Inject(method = "locateStructure", at = @At("HEAD"), cancellable = true)
     private static void locateStructure(CommandSourceStack source, ResourceOrTagKeyArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
-        System.out.println(structure.asPrintable());
         if(!old_villages_enable && structure.asPrintable().equals("serversidehorror:village_old_plains"))
+            throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
+        if(!traps_enable && structure.asPrintable().contains("serversidehorror:traps/trap_"))
             throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
     }
 }

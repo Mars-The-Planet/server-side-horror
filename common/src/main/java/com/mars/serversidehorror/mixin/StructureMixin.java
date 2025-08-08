@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 
 import static com.mars.serversidehorror.Constants.MOD_ID;
 import static com.mars.serversidehorror.ServersideHorrorConfig.old_villages_enable;
+import static com.mars.serversidehorror.ServersideHorrorConfig.traps_enable;
 
 @Mixin(Structure.class)
 public abstract class StructureMixin {
@@ -29,8 +30,9 @@ public abstract class StructureMixin {
     private void generate(RegistryAccess registryAccess, ChunkGenerator chunkGenerator, BiomeSource biomeSource, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed, ChunkPos chunkPos, int references, LevelHeightAccessor heightAccessor, Predicate<Holder<Biome>> validBiome, CallbackInfoReturnable<StructureStart> cir) {
         Holder.Direct direct = new Holder.Direct(this);
         ResourceLocation structureID = registryAccess.registryOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
-        System.out.println(structureID);
         if(!old_villages_enable && structureID.equals(ResourceLocation.fromNamespaceAndPath(MOD_ID, "village_old_plains")))
+            cir.setReturnValue(StructureStart.INVALID_START);
+        if(!traps_enable && structureID.getPath().contains("traps/trap_"))
             cir.setReturnValue(StructureStart.INVALID_START);
     }
 }

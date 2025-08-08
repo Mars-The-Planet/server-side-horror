@@ -1,0 +1,46 @@
+{
+  "structures": [
+    {
+      "structure": "serversidehorror:traps/trap_1",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_2",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_3",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_4",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_5",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_6",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_7",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_8",
+      "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_9",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 5,
+    "separation": 2,
+    "salt": 18052011
+  }
+}

@@ -73,6 +73,7 @@ public class CommonClass{
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_REPLACED = new HashMap<>();
     public static List<ServerPlayer> TO_BE_HIT_BY_LIGHTNING = new ArrayList<>();
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_MINED_FAKE = new HashMap<>();
+    public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_STEPPED_ON_FAKE = new HashMap<>();
 
     public static RandomSource random = RandomSource.create();
 
@@ -416,6 +417,32 @@ public class CommonClass{
             pos.move(dir);
             BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos), target);
             BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos.above()), target);
+        }
+    }
+
+    public static void fakeSteps(ServerPlayer target) {
+        ServerLevel level = target.serverLevel();
+
+        List<BlockPos> validPos = new ArrayList<>();
+        int radius = 10;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos candidate = target.getOnPos().offset(dx, dy, dz);
+                    if(!level.isEmptyBlock(candidate)) continue;
+                    if(!level.isEmptyBlock(candidate.above())) continue;
+                    if(!level.isEmptyBlock(candidate.below())) continue;
+                    if(candidate.distToCenterSqr(target.getX(), target.getY(), target.getZ()) < 4) continue;
+                    validPos.add(candidate);
+                }
+            }
+        }
+        if(validPos.isEmpty())  return;
+        Direction dir = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+        BlockPos.MutableBlockPos pos = validPos.get(random.nextInt(validPos.size())).mutable();
+        for (int i = 0; i < random.nextInt(20); i++) {
+            pos.move(dir);
+            BLOCKS_TO_BE_STEPPED_ON_FAKE.put(new BlockPos(pos), target);
         }
     }
 

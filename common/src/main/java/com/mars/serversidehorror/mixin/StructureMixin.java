@@ -4,8 +4,11 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -20,19 +23,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.function.Predicate;
 
+import static com.mars.serversidehorror.CommonClass.*;
 import static com.mars.serversidehorror.Constants.MOD_ID;
-import static com.mars.serversidehorror.ServersideHorrorConfig.old_villages_enable;
-import static com.mars.serversidehorror.ServersideHorrorConfig.traps_enable;
+import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(Structure.class)
 public abstract class StructureMixin {
     @Inject(method = "generate", at = @At("HEAD"), cancellable = true)
     private void generate(RegistryAccess registryAccess, ChunkGenerator chunkGenerator, BiomeSource biomeSource, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed, ChunkPos chunkPos, int references, LevelHeightAccessor heightAccessor, Predicate<Holder<Biome>> validBiome, CallbackInfoReturnable<StructureStart> cir) {
         Holder.Direct direct = new Holder.Direct(this);
+
         ResourceLocation structureID = registryAccess.registryOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
         if(!old_villages_enable && structureID.equals(ResourceLocation.fromNamespaceAndPath(MOD_ID, "village_old_plains")))
             cir.setReturnValue(StructureStart.INVALID_START);
-        if(!traps_enable && structureID.getPath().contains("traps/trap_"))
-            cir.setReturnValue(StructureStart.INVALID_START);
+
+        if(structureID.getPath().contains("traps/trap_")) {
+            if(grace_period_applies_to_traps) {
+                if(currentLevel == null) cir.setReturnValue(StructureStart.INVALID_START);
+                else if(!isGracePeriodUp(currentLevel)) cir.setReturnValue(StructureStart.INVALID_START);
+            }
+            if(!traps_enable) cir.setReturnValue(StructureStart.INVALID_START);
+        }
     }
 }

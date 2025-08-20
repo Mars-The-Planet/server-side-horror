@@ -4,7 +4,7 @@
   "step": "surface_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_thin",
-  "start_pool": "serversidehorror:traps/trap_3_top",
+  "start_pool": "serversidehorror:traps/trap_3",
   "size": 2,
   "start_height": {
     "absolute": 0

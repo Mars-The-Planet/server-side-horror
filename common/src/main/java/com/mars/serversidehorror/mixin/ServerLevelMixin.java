@@ -22,7 +22,8 @@ public abstract class ServerLevelMixin {
     @Inject(at = @At("HEAD"), method = "tick")
     private void tickServer(BooleanSupplier hasTimeLeft, CallbackInfo info) {
         ServerLevel self = (ServerLevel)(Object)this;
-        if(!isGracePeriodUp(grace_period, self)) return;
+        if(grace_period_applies_to_traps)   currentLevel = self;
+        if(!isGracePeriodUp(self)) return;
 
         TickRateManager tickratemanager = self.tickRateManager();
         if(!tickratemanager.runsNormally())

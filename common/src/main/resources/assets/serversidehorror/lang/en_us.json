@@ -2,6 +2,7 @@
   "serversidehorror.deimosconfig.title": "Sever Side Horror Config",
 
   "serversidehorror.deimosconfig.grace_period": "Delay in days at the start of the game before this mod starts being active",
+  "serversidehorror.deimosconfig.grace_period_applies_to_traps": "Stop traps from generating until the grace period is up",
 
   "serversidehorror.deimosconfig.herobrine_starer_chance": "Chance of spawning Herobrine staring at you per tick",
   "serversidehorror.deimosconfig.herobrine_starer_enable": "Enable spawning Herobrine staring at you",
@@ -30,11 +31,28 @@
   "serversidehorror.deimosconfig.fake_steps_chance": "Chance for a player to hear fake step noises per tick",
   "serversidehorror.deimosconfig.fake_steps_enable": "Enable players hearing fake step noises",
 
+  "serversidehorror.deimosconfig.setting_up_new_traps_chance": "Chance for a new trap to be set up near a random player per tick",
+  "serversidehorror.deimosconfig.setting_up_new_traps_enable": "Enable new traps being set up near players",
+
+  "serversidehorror.deimosconfig.burn_down_house_chance_per_wake_up": "Chance for a player to wake up to their house burning down",
+  "serversidehorror.deimosconfig.burn_down_house_enable": "Enable starting fires on wake up",
+
+  "serversidehorror.deimosconfig.removing_leaves_chance": "Chance for leaves to be removed from forest per tick",
+  "serversidehorror.deimosconfig.removing_leaves_enable": "Enable leaves being removed from a forest",
+
+  "serversidehorror.deimosconfig.random_signs_chance": "Chance for a random sign to be placed near a player per tick",
+  "serversidehorror.deimosconfig.random_signs_enable": "Enable placing random signs near players",
+  "serversidehorror.deimosconfig.random_signs_texts": "Texts of the random sings",
+
   "serversidehorror.deimosconfig.joining_on_bedrock_chance": "Chance for a player to rejoin on a block of bedrock at build limit",
   "serversidehorror.deimosconfig.joining_on_bedrock_enable": "Enable players joining at build limit",
+
+  "serversidehorror.deimosconfig.joining_in_dungeon_chance": "Chance for a player to rejoin in an underground dungeon",
+  "serversidehorror.deimosconfig.joining_in_dungeon_enable": "Enable players joining in an underground dungeon",
 
   "serversidehorror.deimosconfig.old_villages_enable": "Allow old villages to appear in your world",
   "serversidehorror.deimosconfig.traps_enable": "Allow traps to appear in your world",
 
-  "serversidehorror.commands.locate.structure.disabled": "Couldn't find the structure you were looking for because it was disabled in the config"
+  "serversidehorror.commands.locate.structure.disabled": "Couldn't find the structure you were looking for because it was disabled in the config",
+  "serversidehorror.commands.locate.structure.grace_period_not_up": "Grace period is not up yet and traps can not generate"
 }

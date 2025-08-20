@@ -19,9 +19,14 @@ public class ServerPlayerMixin {
     private void tick(CallbackInfo ci) {
         ServerPlayer self = (ServerPlayer)(Object)this;
 
-        if(isGracePeriodUp(grace_period, self.serverLevel())) {
+        if(isGracePeriodUp(self.serverLevel())) {
             if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self))
-                spawnFakePlayer(self, "MarsThePlanet_", 20, true);
+                spawnFakePlayer(self, "MarsThePlanet_", 40, true);
+
+            if(starer_enable && chanceOneIn(starer_chance) && !FAKE_PLAYERS.containsKey(self)){
+                String fakeName = starer_list.get(random.nextInt(starer_list.size()));
+                spawnFakePlayer(self, fakeName, 40, false);
+            }
 
             if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self))
                 TO_BE_JUMP_SCARED.add(self);
@@ -40,6 +45,15 @@ public class ServerPlayerMixin {
 
             if(fake_steps_enable && chanceOneIn(fake_steps_chance) && !FAKE_PLAYERS.containsKey(self))
                 fakeSteps(self);
+
+            if(setting_up_new_traps_enable && chanceOneIn(setting_up_new_traps_chance) && !FAKE_PLAYERS.containsKey(self))
+                placeSmallTrap(self);
+
+            if(removing_leaves_enable && chanceOneIn(removing_leaves_chance) && !FAKE_PLAYERS.containsKey(self))
+                removeLeaves(self, random.nextInt(60, 160), 50);
+
+            if(random_signs_enable && chanceOneIn(random_signs_chance) && !FAKE_PLAYERS.containsKey(self))
+                placeSign(self, 100, 10);
         }
 
         if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))
@@ -63,5 +77,13 @@ public class ServerPlayerMixin {
         lastX = x;
         lastY = y;
         lastZ = z;
+    }
+
+    @Inject(method = "stopSleepInBed", at = @At("TAIL"))
+    private void stopSleepInBed(boolean wakeImmediately, boolean updateLevelForSleepingPlayers, CallbackInfo ci) {
+        if(wakeImmediately || !burn_down_house_enable || !chanceOneIn(burn_down_house_chance_per_wake_up)) return;
+        ServerPlayer self = (ServerPlayer)(Object)this;
+        startFire(self, 8);
+        spawnFakePlayer(self, "MarsThePlanet_", 20, true);
     }
 }

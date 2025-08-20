@@ -24,6 +24,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -38,8 +39,20 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
@@ -60,20 +73,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.mars.serversidehorror.CommonClass.breakTorches;
+import static com.mars.serversidehorror.Constants.MOD_ID;
 import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
+import static com.mars.serversidehorror.ServersideHorrorConfig.grace_period;
+import static com.mars.serversidehorror.ServersideHorrorConfig.random_signs_texts;
 import static net.minecraft.commands.Commands.literal;
 
 public class CommonClass{
     public static Map<ServerPlayer, Integer> FAKE_PLAYERS = new HashMap<>();
     public static Map<ServerPlayer, Integer> FAKE_JOINERS = new HashMap<>();
-    public static Map<ServerPlayer, Integer> FAKE_JOINERS_TALKERS = new HashMap<>();
+    public static Map<ServerPlayer, Object[]> FAKE_JOINERS_TALKERS = new HashMap<>();
     public static List<ServerPlayer> TO_BE_JUMP_SCARED = new ArrayList<>();
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_BROKEN = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> TORCHES_TO_BE_REPLACED = new HashMap<>();
     public static List<ServerPlayer> TO_BE_HIT_BY_LIGHTNING = new ArrayList<>();
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_MINED_FAKE = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_STEPPED_ON_FAKE = new HashMap<>();
+    public static ServerLevel currentLevel;
 
     public static RandomSource random = RandomSource.create();
 
@@ -88,7 +104,7 @@ public class CommonClass{
                         .then(Commands.argument("fakesName", StringArgumentType.word())
                             .executes(ctx -> {
                                 String fakesName = StringArgumentType.getString(ctx, "fakesName");
-                                addFakeJoiner(ctx.getSource().getServer(), fakesName);
+                                addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
                                 ctx.getSource().sendSuccess(() -> Component.literal("Added a fake player " + fakesName), true);
                                 return 1;
                             })));
@@ -109,6 +125,16 @@ public class CommonClass{
                                     ctx.getSource().sendSuccess(() -> Component.literal("Spawned a fake player " + fakesName), true);
                                     return 1;
                                 }))))));
+
+        dispatcher.register(
+                literal("spawnFakePlayer")
+                        .requires(src -> src.hasPermission(2))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Spawned a Herobrine near players"), true);
+                                    return 1;
+                                }));
 
         dispatcher.register(
                 literal("hitPlayerLightning")
@@ -186,10 +212,91 @@ public class CommonClass{
                                     ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake mining noises"), true);
                                     return 1;
                                 })));
+
+        dispatcher.register(
+                literal("fakeSteps")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    targets.forEach(target -> fakeSteps(target));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake step noises"), true);
+                                    return 1;
+                                })));
+
+        dispatcher.register(
+                literal("setupNewTrap")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+
+                                    targets.forEach(target -> placeSmallTrap(target));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("A new trap will be be set up near these players"), true);
+                                    return 1;
+                                })));
+
+        dispatcher.register(
+                literal("startRandomFire")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                    targets.forEach(target -> startFire(target, radius));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("A random fire will be started near these players"), true);
+                                    return 1;
+                                }))));
+
+        dispatcher.register(
+                literal("removeLeaves")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                    targets.forEach(target -> removeLeaves(target, maxRadius, minRadius));
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Leaves will be removed around players"), true);
+                                    return 1;
+                                })))));
+
+        dispatcher.register(
+                literal("placeSign")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                .executes(ctx -> {
+                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                    for(ServerPlayer target : targets){
+                                        boolean canPlace = placeSign(target, maxRadius, minRadius);
+                                        if(canPlace)
+                                            ctx.getSource().sendSuccess(() -> Component.literal("Signs were placed near player " + target.getName().getString()), true);
+                                        else
+                                            ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place sing near player " + target.getName().getString()), true);
+                                    }
+                                    return 1;
+                                })))));
+
+        dispatcher.register(
+                literal("resetMassages")
+                        .requires(src -> src.hasPermission(2))
+                                .executes(ctx -> {
+                                    DimensionDataStorage storage = (ctx.getSource().getServer()).overworld().getDataStorage();
+                                    SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                                    savedData.setPlayerMessages(new ArrayList<>());
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
+                                    return 1;
+                                }));
     }
 
     // ------EVENTS------
-
     public static void particleJumpScare(ServerPlayer target){
         ServerLevel level = target.serverLevel();
 
@@ -246,10 +353,10 @@ public class CommonClass{
         }
     }
 
-    public static void addFakeJoiner(MinecraftServer server, String name){
-        if (server == null) return;
+    public static boolean addFakeJoiner(MinecraftServer server, String name, boolean canBeTalker){
+        if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
-        if(playerList.isEmpty())    return;
+        if(playerList.isEmpty()) return false;
 
         Component joinMsg = Component.translatable("multiplayer.player.joined", name);
         server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
@@ -271,9 +378,42 @@ public class CommonClass{
         FAKE_JOINERS.put(fake, lifeTime);
 
         // is talker?
-        if(random.nextBoolean()){
-            FAKE_JOINERS_TALKERS.put(fake, random.nextInt(1, lifeTime - 1));
+        if(canBeTalker && random.nextBoolean()) {
+            DimensionDataStorage storage = server.overworld().getDataStorage();
+            SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+            FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(random.nextInt(savedData.getPlayerMessages().size() - 1)), random.nextInt(1, lifeTime - 1)});
         }
+
+        return true;
+    }
+
+    public static boolean addFakeJoiner(MinecraftServer server, String name, String msg){
+        if (server == null) return false;
+        List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
+        if(playerList.isEmpty()) return false;
+
+        Component joinMsg = Component.translatable("multiplayer.player.joined", name);
+        server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
+
+        ServerLevel level = server.overworld();
+        GameProfile profile = new GameProfile(UUID.randomUUID(), name);
+        String[] skin = getSkin(name);
+        profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
+        ServerPlayer fake = new ServerPlayer(server, level, profile, playerList.getFirst().clientInformation());
+
+        fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
+        ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
+        ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+
+        server.getPlayerList().broadcastAll(addInfo);
+        server.getPlayerList().broadcastAll(updateList);
+
+        int lifeTime = random.nextInt(600, 60000);
+        FAKE_JOINERS.put(fake, lifeTime);
+
+        FAKE_JOINERS_TALKERS.put(fake, new Object[]{msg, random.nextInt(1, lifeTime - 1)});
+
+        return true;
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
@@ -284,26 +424,28 @@ public class CommonClass{
         server.getPlayerList().broadcastAll(removeInfo);
     }
 
-    public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean isHerobrine) {
+    public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean hideNameTag) {
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
         ServerLevel level = target.serverLevel();
         GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 
-        // removing nametag
-        Scoreboard scoreboard = level.getScoreboard();
-        PlayerTeam hideTagTeam = scoreboard.getPlayerTeam("noTags");
-        if (hideTagTeam == null) {
-            hideTagTeam = scoreboard.addPlayerTeam("noTags");
-            hideTagTeam.setNameTagVisibility(Team.Visibility.NEVER);
-        }
-
         // create fake player
         String[] skin = getSkin(name);
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
-        scoreboard.addPlayerToTeam(name, hideTagTeam);
+
+        // remove nametag
+        if(hideNameTag){
+            Scoreboard scoreboard = level.getScoreboard();
+            PlayerTeam hideTagTeam = scoreboard.getPlayerTeam("noTags");
+            if (hideTagTeam == null) {
+                hideTagTeam = scoreboard.addPlayerTeam("noTags");
+                hideTagTeam.setNameTagVisibility(Team.Visibility.NEVER);
+            }
+            scoreboard.addPlayerToTeam(name, hideTagTeam);
+        }
 
         Optional<BlockPos> spawnOpt = findValidSpawnPos(level, fake, target, radius, true);
         double spawnX, spawnY, spawnZ;
@@ -343,10 +485,10 @@ public class CommonClass{
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(spawnPacket);
 
-        if(!isHerobrine){
-            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
-            server.getPlayerList().broadcastAll(updateList);
-        }
+//        if(!isHerobrine){
+//            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+//            server.getPlayerList().broadcastAll(updateList);
+//        }
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
@@ -452,26 +594,113 @@ public class CommonClass{
         MinecraftServer server = target.server;
         BlockPos playerPos = new BlockPos((int)target.getX(), 319, (int)target.getZ());
 
-        server.overworld().setBlock(playerPos, Blocks.BEDROCK.defaultBlockState(), 3);
+
+        server.overworld().setBlockAndUpdate(playerPos, Blocks.BEDROCK.defaultBlockState());
         listener.teleport(((int)target.getX()) + 0.5, 320, ((int)target.getZ()) + 0.5, target.getYRot(), target.getXRot());
     }
 
-    // ------HELPER METHODS------
+    public static void placeSmallTrap(ServerPlayer target) {
+        MinecraftServer server = target.server;
+        ServerLevel level = target.serverLevel();
 
-    public static List<BlockPos> getTorchesInRadius(ServerPlayer player, BlockPos centre, ServerLevel level, int minRange, int maxRange){
-        List<BlockPos> torches = new ArrayList<>();
-        BlockPos aMax = centre.offset(-maxRange, -maxRange, -maxRange);
-        BlockPos bMax = centre.offset( maxRange,  maxRange,  maxRange);
+        StructureTemplateManager manager = server.getStructureManager();
+        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
+        if(optionalTemplate.isEmpty()) return;
+        StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
+        StructureTemplate template = optionalTemplate.get();
 
-        Iterable<BlockPos> allBlocksInRange = BlockPos.betweenClosed(aMax, bMax);
-        for(BlockPos pos : allBlocksInRange){
-            if((level.getBlockState(pos).is(Blocks.TORCH) || level.getBlockState(pos).is(Blocks.WALL_TORCH)) &&
-                    !pos.closerThan(new Vec3i(centre.getX(), centre.getY(), centre.getZ()), minRange) && !canSeeBlock(player, pos)){
-                torches.add(new BlockPos(pos));
-            }
+        findPlacement(level, target.blockPosition(), template, settings, 80, target)
+                .ifPresent(origin -> template.placeInWorld(level, origin, origin, settings, random, 3));
+    }
+
+    public static void startFire(ServerPlayer target, int radius) {
+        ServerLevel level = target.serverLevel();
+        Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
+        if(targetPos.isEmpty()) return;
+        BlockPos pos = targetPos.get();
+        level.setBlockAndUpdate(pos, BaseFireBlock.getState(level, pos));
+        level.playSound(null, pos, SoundEvents.FLINTANDSTEEL_USE, SoundSource.NEUTRAL, 1, 1);
+    }
+
+    public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
+        MinecraftServer server = target.server;
+        ServerLevel level = target.serverLevel();
+        StructureTemplateManager manager = server.getStructureManager();
+        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
+        if(optionalTemplate.isEmpty()) return;
+        StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
+        StructureTemplate template = optionalTemplate.get();
+
+        findPlacementRejoinDungeon(level, target.blockPosition(), template, settings, 80, target)
+                .ifPresent(origin -> {
+                    System.out.println("SLO TO " + origin);
+                    template.placeInWorld(level, origin, origin, settings, random, 3);
+                    listener.teleport(origin.getX() + 2.5, -58, origin.getZ() + 2.5, target.getYRot(), target.getXRot());
+                });
+    }
+
+    public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
+        ServerLevel level = target.serverLevel();
+        BlockPos playerPos = target.getOnPos();
+
+        BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
+        BlockPos bMax = playerPos.offset(maxRadius, maxRadius, maxRadius);
+        Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
+
+        for(BlockPos pos : allBlocksInRadius) {
+            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if (!(level.getBlockState(pos).getBlock() instanceof LeavesBlock)) continue;
+            BlockState state = level.getBlockState(pos);
+            if(state.getValue(LeavesBlock.PERSISTENT)) continue;
+            level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        }
+    }
+
+    public static boolean placeSign(ServerPlayer target, int maxRadius, int minRadius) {
+        ServerLevel level = target.serverLevel();
+        BlockPos playerPos = target.getOnPos();
+
+        BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
+        BlockPos bMax = playerPos.offset(maxRadius, maxRadius, maxRadius);
+        Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
+        List<BlockPos> candidates = new ArrayList<>();
+
+        for (BlockPos pos : allBlocksInRadius) {
+            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if (canSeeBlock(target, pos)) continue;
+            if (!level.isEmptyBlock(pos)) continue;
+            if (!level.getFluidState(pos).isEmpty()) continue;
+            if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            candidates.add(new BlockPos(pos));
         }
 
-        return torches;
+        if(candidates.isEmpty()) return false;
+
+        BlockPos finalPos = candidates.get(random.nextInt(candidates.size()));
+        level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
+        if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
+            String[] lines = random_signs_texts.get(random.nextInt(random_signs_texts.size())).split("\\r?\\n");
+            SignText text = sign.getText(true)
+                    .setMessage(0, Component.literal(lines[0]))
+                    .setMessage(1, Component.literal(lines[1]))
+                    .setMessage(2, Component.literal(lines[2]))
+                    .setMessage(3, Component.literal(lines[3]));
+
+            sign.setText(text, true);
+            sign.setChanged();
+            level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);
+        }
+
+        return true;
+    }
+
+    // ------HELPER METHODS------
+    public static boolean chanceOneIn(int denominator){
+        return random.nextInt(denominator) == 0;
+    }
+
+    public static boolean isGracePeriodUp(ServerLevel level) {
+        return level.getLevelData().getGameTime() > grace_period * 24000L;
     }
 
     public static boolean canSeeBlock(ServerPlayer player, BlockPos pos) {
@@ -487,7 +716,6 @@ public class CommonClass{
         }
         return ((BlockHitResult) result).getBlockPos().equals(pos);
     }
-
 
     public static List<String> getSeenPlayers(MinecraftServer server) {
         Path worldPath = server.getWorldPath(LevelResource.ROOT);
@@ -522,10 +750,6 @@ public class CommonClass{
         return names;
     }
 
-    public static boolean chanceOneIn(int denominator){
-        return random.nextInt(denominator) == 0;
-    }
-
     private static String[] getSkin(String name){
         try {
             URL profileUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
@@ -546,6 +770,22 @@ public class CommonClass{
             Constants.LOG.warn(String.valueOf(e));
             return getSkin("IceBreak");
         }
+    }
+
+    public static List<BlockPos> getTorchesInRadius(ServerPlayer player, BlockPos centre, ServerLevel level, int minRange, int maxRange){
+        List<BlockPos> torches = new ArrayList<>();
+        BlockPos aMax = centre.offset(-maxRange, -maxRange, -maxRange);
+        BlockPos bMax = centre.offset( maxRange,  maxRange,  maxRange);
+
+        Iterable<BlockPos> allBlocksInRange = BlockPos.betweenClosed(aMax, bMax);
+        for(BlockPos pos : allBlocksInRange){
+            if((level.getBlockState(pos).is(Blocks.TORCH) || level.getBlockState(pos).is(Blocks.WALL_TORCH)) &&
+                    !pos.closerThan(new Vec3i(centre.getX(), centre.getY(), centre.getZ()), minRange) && !canSeeBlock(player, pos)){
+                torches.add(new BlockPos(pos));
+            }
+        }
+
+        return torches;
     }
 
     private static Optional<BlockPos> findValidSpawnPos(ServerLevel level, ServerPlayer fake, ServerPlayer target, int radius, boolean lineOfSight) {
@@ -576,11 +816,182 @@ public class CommonClass{
         return Optional.of(valid.get(random.nextInt(valid.size())));
     }
 
-    public static boolean isGracePeriodUp(int period, ServerLevel level) {
-        return level.getLevelData().getGameTime() > period * 24000L;
+    private static Optional<BlockPos> findPlacement(ServerLevel level, BlockPos around, StructureTemplate template, StructurePlaceSettings settings, int radiusBlocks, ServerPlayer player) {
+        BoundingBox boxAtZero = template.getBoundingBox(settings, BlockPos.ZERO);
+        int sizeX = boxAtZero.getXSpan();
+        int sizeY = boxAtZero.getYSpan();
+        int sizeZ = boxAtZero.getZSpan();
+
+        ChunkSource chunkSource = level.getChunkSource();
+
+        // looking for a valid position from the furthest position spiraling inwards
+        for (int r = radiusBlocks; r >= 0; r--) {
+            for (int dx = -r; dx <= r; dx++) {
+                int dzRing1 = r;
+                int dzRing2 = -r;
+                if (tryCandidate(level, chunkSource, around.getX() + dx, around.getZ() + dzRing1, sizeX, sizeZ, sizeY, player).isPresent()) {
+                    return tryCandidate(level, chunkSource, around.getX() + dx, around.getZ() + dzRing1, sizeX, sizeZ, sizeY, player);
+                }
+                if (tryCandidate(level, chunkSource, around.getX() + dx, around.getZ() + dzRing2, sizeX, sizeZ, sizeY, player).isPresent()) {
+                    return tryCandidate(level, chunkSource, around.getX() + dx, around.getZ() + dzRing2, sizeX, sizeZ, sizeY, player);
+                }
+            }
+            for (int dz = -r + 1; dz <= r - 1; dz++) {
+                int dxRing1 = r;
+                int dxRing2 = -r;
+                if (tryCandidate(level, chunkSource, around.getX() + dxRing1, around.getZ() + dz, sizeX, sizeZ, sizeY, player).isPresent()) {
+                    return tryCandidate(level, chunkSource, around.getX() + dxRing1, around.getZ() + dz, sizeX, sizeZ, sizeY, player);
+                }
+                if (tryCandidate(level, chunkSource, around.getX() + dxRing2, around.getZ() + dz, sizeX, sizeZ, sizeY, player).isPresent()) {
+                    return tryCandidate(level, chunkSource, around.getX() + dxRing2, around.getZ() + dz, sizeX, sizeZ, sizeY, player);
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<BlockPos> tryCandidate(ServerLevel level, ChunkSource chunkSource, int cornerX, int cornerZ, int sizeX, int sizeZ, int sizeY, ServerPlayer player) {
+        // Ensure chunks are already generated
+        int minChunkX = (cornerX) >> 4;
+        int minChunkZ = (cornerZ) >> 4;
+        int maxChunkX = (cornerX + sizeX - 1) >> 4;
+        int maxChunkZ = (cornerZ + sizeZ - 1) >> 4;
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                ChunkAccess chk = chunkSource.getChunkNow(cx, cz);
+                if (chk == null) return Optional.empty();
+            }
+        }
+
+        Integer flatGroundY = null;
+        for (int x = 0; x < sizeX; x++) {
+            for (int z = 0; z < sizeZ; z++) {
+                int worldX = cornerX + x;
+                int worldZ = cornerZ + z;
+                int topY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ) - 1;
+                if (flatGroundY == null) {
+                    flatGroundY = topY;
+                } else if (topY != flatGroundY) {
+                    return Optional.empty();
+                }
+            }
+        }
+        if (flatGroundY == null) return Optional.empty();
+
+        int originY = flatGroundY + 1;
+        BlockPos origin = new BlockPos(cornerX, originY, cornerZ);
+
+        if(canSeeBlock(player, origin) || canSeeBlock(player, origin.above()))
+            return Optional.empty();
+
+        for (int x = 0; x < sizeX; x++) {
+            for (int z = 0; z < sizeZ; z++) {
+                BlockPos supportPos = new BlockPos(cornerX + x, flatGroundY, cornerZ + z);
+                BlockState support = level.getBlockState(supportPos);
+                if (support.isAir() || !support.isFaceSturdy(level, supportPos, Direction.UP)) {
+                    return Optional.empty();
+                }
+            }
+        }
+
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                for (int z = 0; z < sizeZ; z++) {
+                    BlockPos p = new BlockPos(cornerX + x, originY + y, cornerZ + z);
+                    if (!level.isInWorldBounds(p)) return Optional.empty();
+                    if (!level.getBlockState(p).isAir()) return Optional.empty();
+                }
+            }
+        }
+
+        return Optional.of(origin);
+    }
+
+    private static Optional<BlockPos> findPlacementRejoinDungeon(ServerLevel level, BlockPos around, StructureTemplate template, StructurePlaceSettings settings, int radiusBlocks, ServerPlayer player) {
+        BoundingBox boxAtZero = template.getBoundingBox(settings, BlockPos.ZERO);
+        int sizeX = boxAtZero.getXSpan();
+        int sizeY = boxAtZero.getYSpan();
+        int sizeZ = boxAtZero.getZSpan();
+
+        // looking for a valid position from the closest position spiraling outwards
+        for (int r = 0; r <= radiusBlocks; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                int dzRing1 = r;
+                int dzRing2 = -r;
+                if (tryCandidateRejoinDungeon(level, around.getX() + dx, around.getZ() + dzRing1, sizeX, sizeZ, sizeY).isPresent()) {
+                    return tryCandidateRejoinDungeon(level, around.getX() + dx, around.getZ() + dzRing1, sizeX, sizeZ, sizeY);
+                }
+                if (tryCandidateRejoinDungeon(level, around.getX() + dx, around.getZ() + dzRing2, sizeX, sizeZ, sizeY).isPresent()) {
+                    return tryCandidateRejoinDungeon(level, around.getX() + dx, around.getZ() + dzRing2, sizeX, sizeZ, sizeY);
+                }
+            }
+            for (int dz = -r + 1; dz <= r - 1; dz++) {
+                int dxRing1 = r;
+                int dxRing2 = -r;
+                if (tryCandidateRejoinDungeon(level, around.getX() + dxRing1, around.getZ() + dz, sizeX, sizeZ, sizeY).isPresent()) {
+                    return tryCandidateRejoinDungeon(level, around.getX() + dxRing1, around.getZ() + dz, sizeX, sizeZ, sizeY);
+                }
+                if (tryCandidateRejoinDungeon(level, around.getX() + dxRing2, around.getZ() + dz, sizeX, sizeZ, sizeY).isPresent()) {
+                    return tryCandidateRejoinDungeon(level, around.getX() + dxRing2, around.getZ() + dz, sizeX, sizeZ, sizeY);
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<BlockPos> tryCandidateRejoinDungeon(ServerLevel level, int cornerX, int cornerZ, int sizeX, int sizeZ, int sizeY) {
+        int originY = -59;
+        BlockPos origin = new BlockPos(cornerX, originY, cornerZ);
+
+        // is fully encased in deep slate
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                for (int z = 0; z < sizeZ; z++) {
+                    BlockPos p = new BlockPos(cornerX + x, originY + y, cornerZ + z);
+                    if (!level.isInWorldBounds(p)) return Optional.empty();
+                    if (!level.getBlockState(p).is(Blocks.DEEPSLATE)) return Optional.empty();
+                }
+            }
+        }
+
+        return Optional.of(origin);
+    }
+
+    private static Optional<BlockPos> findBurnablePos(ServerPlayer target, ServerLevel level, int radius){
+        List<BlockPos> valid = new ArrayList<>();
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos candidate = target.getOnPos().offset(dx, dy, dz);
+                    BlockState state = level.getBlockState(candidate);
+                    if(!state.isAir()) continue;
+                    if(!hasFlammableNeighbours(level, candidate)) continue;
+                    if(canSeeBlock(target, candidate)) continue;
+
+                    valid.add(candidate);
+                }
+            }
+        }
+
+        if (valid.isEmpty()) return Optional.empty();
+        // picks a random one from the valid spots
+        return Optional.of(valid.get(random.nextInt(valid.size())));
+    }
+
+    private static boolean hasFlammableNeighbours(LevelReader level, BlockPos pos) {
+        for(Direction direction : Direction.values()) {
+            if (isFlammable(level, pos.relative(direction))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isFlammable(LevelReader level, BlockPos pos) {
+        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight() || level.hasChunkAt(pos)) && level.getBlockState(pos).ignitedByLava();
     }
 }
-
-
-
-

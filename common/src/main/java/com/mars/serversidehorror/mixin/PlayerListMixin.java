@@ -19,20 +19,21 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 public abstract class PlayerListMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
-        System.out.println("CAU");
-
         PlayerList self = (PlayerList)(Object)this;
         MinecraftServer server = self.getServer();
-        if(!isGracePeriodUp(grace_period, server.overworld()))
+        if(!isGracePeriodUp(server.overworld()))
             return;
 
         if(player.serverLevel() != server.overworld())
             return;
 
-        if(!(joining_on_bedrock_enable && chanceOneIn(joining_on_bedrock_chance) && !FAKE_PLAYERS.containsKey(player)))
-            return;
-
         ServerGamePacketListenerImpl listener = (ServerGamePacketListenerImpl)connection.getPacketListener();
-        joinOnBedrock(player, listener);
+
+        if(joining_on_bedrock_enable && chanceOneIn(joining_on_bedrock_chance) && !FAKE_PLAYERS.containsKey(player)) {
+            joinOnBedrock(player, listener);
+        }
+
+        if(joining_in_dungeon_enable && chanceOneIn(joining_in_dungeon_chance) && !FAKE_PLAYERS.containsKey(player))
+            joinInDungeon(player, listener);
     }
 }

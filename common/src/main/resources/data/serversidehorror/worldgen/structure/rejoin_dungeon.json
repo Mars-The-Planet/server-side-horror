@@ -1,11 +1,11 @@
 {
   "type": "minecraft:jigsaw",
-  "biomes": "#serversidehorror:has_sand",
+  "biomes": "#minecraft:is_overworld",
   "step": "surface_structures",
   "spawn_overrides": {},
   "terrain_adaptation": "beard_thin",
-  "start_pool": "serversidehorror:traps/trap_4_top",
-  "size": 2,
+  "start_pool": "serversidehorror:rejoin_dungeon",
+  "size": 1,
   "start_height": {
     "absolute": 0
   },

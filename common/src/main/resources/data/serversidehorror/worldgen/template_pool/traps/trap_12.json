@@ -5,7 +5,7 @@
       "weight": 1,
       "element": {
         "element_type": "minecraft:single_pool_element",
-        "location": "serversidehorror:traps/trap_3_top",
+        "location": "serversidehorror:traps/trap_12",
         "projection": "rigid",
         "processors": "minecraft:empty"
       }

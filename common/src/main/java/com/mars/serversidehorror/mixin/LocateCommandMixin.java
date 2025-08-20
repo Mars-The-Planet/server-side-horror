@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static com.mars.serversidehorror.ServersideHorrorConfig.old_villages_enable;
-import static com.mars.serversidehorror.ServersideHorrorConfig.traps_enable;
+import static com.mars.serversidehorror.CommonClass.isGracePeriodUp;
+import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(LocateCommand.class)
 public class LocateCommandMixin {
@@ -21,7 +21,12 @@ public class LocateCommandMixin {
     private static void locateStructure(CommandSourceStack source, ResourceOrTagKeyArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
         if(!old_villages_enable && structure.asPrintable().equals("serversidehorror:village_old_plains"))
             throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
-        if(!traps_enable && structure.asPrintable().contains("serversidehorror:traps/trap_"))
-            throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
+
+        if(structure.asPrintable().contains("serversidehorror:traps/trap_")){
+            if(!traps_enable)
+                throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
+            if(!isGracePeriodUp(source.getServer().overworld()) && grace_period_applies_to_traps)
+                throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.grace_period_not_up")).create();
+        }
     }
 }

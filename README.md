@@ -9,7 +9,7 @@
 <details>
 <summary><strong>SPOILERS</strong></summary>
 <p>This mod is highly configurable. You can disable or change the odds of each event. You can also add or remove names, chat massages or sign texts. You can configure this mod directly in-game or by editing the JSON file located at <code>config/serversidehorror.json</code> in your profile folder.</p>
-<img src="https://i.imgur.com/AIHBxNB.png"/>
+<img src="https://i.imgur.com/MP453qH.png"/>
 <img src="https://i.imgur.com/A74ARx3.png"/>
 <img src="https://i.imgur.com/nwru9AH.png"/>
 <img src="https://i.imgur.com/fTG3Eaa.png"/>
@@ -22,11 +22,11 @@
 <img src="https://i.imgur.com/IyrZIP3.png"/>
 <img src="https://i.imgur.com/nLIrWiB.png"/>
 <img src="https://i.imgur.com/551wYZr.png"/>
-<img src="https://i.imgur.com/WH4tvBk.png"/>
+<img src="https://i.imgur.com/1zxK9GX.png"/>
 <img src="https://i.imgur.com/0o6PGFQ.png"/>
 <img src="https://i.imgur.com/v6bIeiF.png"/>
-<img src="https://i.imgur.com/5w8ulqe.png"/>
-<img src="https://i.imgur.com/74CZ7EI.png"/>
+<img src="https://i.imgur.com/5fx7tai.png"/>
+<img src="https://i.imgur.com/kMMGUnn.png"/>
 <h3>Commands</h3>
 <p>You can use commands to target specific players and activate  specific events when you want.</p>
 <p><code>/addFakeJoiner &lt;fakesName&gt;</code></p>

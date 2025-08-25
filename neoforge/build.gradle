@@ -24,7 +24,7 @@ neoForge {
         }
         data {
             // bellow 1.21.4 use data()
-            data()
+            clientData()
         }
         server {
             server()

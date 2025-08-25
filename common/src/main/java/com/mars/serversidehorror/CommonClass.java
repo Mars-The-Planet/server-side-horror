@@ -333,7 +333,7 @@ public class CommonClass{
                     float offsetX = (x * spacing) - width;
                     float offsetY = height - (y * spacing);
                     Vec3 pos = basePos.add(right.scale(offsetX)).add(up.scale(offsetY));
-                    level.sendParticles(target, dust, false, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+                    level.sendParticles(dust, false, false, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
 
                     if(herobrineFace[y][x][0] == 1f)
                         eyes.add(pos);
@@ -344,7 +344,7 @@ public class CommonClass{
         // Just eyes
         for (Vec3 eye : eyes) {
             var dust = new DustParticleOptions(16777215, 1);
-            level.sendParticles(target, dust, false, eye.x, eye.y, eye.z, 1, 0, 0, 0, 0);
+            level.sendParticles(dust, false, false, eye.x, eye.y, eye.z, 1, 0, 0, 0, 0);
         }
     }
 

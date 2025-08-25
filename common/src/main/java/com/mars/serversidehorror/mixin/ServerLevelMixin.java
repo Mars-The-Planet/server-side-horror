@@ -34,14 +34,14 @@ public abstract class ServerLevelMixin {
         SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
 
         //Midnight - rolls a chance to be a long night
-        if(time == 18000 && self.getLevelData().getGameRules().getBoolean(GameRules.RULE_DAYLIGHT) && long_night_enable){
+        if(time == 18000 && self.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT) && long_night_enable){
             savedData.setLongNight(chanceOneIn(long_night_chance));
         }
 
         // rolls a chance to end the long night
         if(savedData.getLongNight()){
             savedData.setLongNight(!chanceOneIn(12000));
-            self.getLevelData().getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(!savedData.getLongNight(), self.getServer());
+            self.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(!savedData.getLongNight(), self.getServer());
         }
     }
 }

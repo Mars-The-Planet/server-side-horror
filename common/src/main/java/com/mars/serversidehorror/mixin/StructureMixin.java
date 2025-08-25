@@ -4,11 +4,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
-import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -33,7 +30,7 @@ public abstract class StructureMixin {
     private void generate(RegistryAccess registryAccess, ChunkGenerator chunkGenerator, BiomeSource biomeSource, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed, ChunkPos chunkPos, int references, LevelHeightAccessor heightAccessor, Predicate<Holder<Biome>> validBiome, CallbackInfoReturnable<StructureStart> cir) {
         Holder.Direct direct = new Holder.Direct(this);
 
-        ResourceLocation structureID = registryAccess.registryOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
+        ResourceLocation structureID = registryAccess.lookupOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
         if(!old_villages_enable && structureID.equals(ResourceLocation.fromNamespaceAndPath(MOD_ID, "village_old_plains")))
             cir.setReturnValue(StructureStart.INVALID_START);
 

@@ -37,6 +37,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
@@ -61,7 +62,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
-import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -329,17 +329,13 @@ public class CommonClass{
         for (int i = 0; i < 50; i++) {
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
-                    float r = herobrineFace[y][x][0];
-                    float g = herobrineFace[y][x][1];
-                    float b = herobrineFace[y][x][2];
-                    var dust = new DustParticleOptions(new Vector3f(r, g, b), 1);
-
+                    var dust = new DustParticleOptions(rgbToInt(herobrineFace[y][x]), 1);
                     float offsetX = (x * spacing) - width;
                     float offsetY = height - (y * spacing);
                     Vec3 pos = basePos.add(right.scale(offsetX)).add(up.scale(offsetY));
                     level.sendParticles(target, dust, false, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
 
-                    if(r == 1f)
+                    if(herobrineFace[y][x][0] == 1f)
                         eyes.add(pos);
                 }
             }
@@ -347,7 +343,7 @@ public class CommonClass{
 
         // Just eyes
         for (Vec3 eye : eyes) {
-            var dust = new DustParticleOptions(new Vector3f(1, 1, 1), 1);
+            var dust = new DustParticleOptions(16777215, 1);
             level.sendParticles(target, dust, false, eye.x, eye.y, eye.z, 1, 0, 0, 0, 0);
         }
     }
@@ -525,7 +521,7 @@ public class CommonClass{
     public static boolean hitPlayerLightning(ServerPlayer target) {
         ServerLevel level = target.serverLevel();
         if(!level.canSeeSky(target.blockPosition())) return false;
-        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
+        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
         lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
         level.addFreshEntity(lightningbolt);
         spawnFakePlayer(target, "MarsThePlanet_", 20, true);
@@ -630,7 +626,7 @@ public class CommonClass{
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();
 
-        findPlacementRejoinDungeon(level, target.blockPosition(), template, settings, 80, target)
+        findPlacementRejoinDungeon(level, target.blockPosition(), template, settings, 80)
                 .ifPresent(origin -> {
                     template.placeInWorld(level, origin, origin, settings, random, 3);
                     listener.teleport(origin.getX() + 2.5, -58, origin.getZ() + 2.5, target.getYRot(), target.getXRot());
@@ -906,7 +902,7 @@ public class CommonClass{
         return Optional.of(origin);
     }
 
-    private static Optional<BlockPos> findPlacementRejoinDungeon(ServerLevel level, BlockPos around, StructureTemplate template, StructurePlaceSettings settings, int radiusBlocks, ServerPlayer player) {
+    private static Optional<BlockPos> findPlacementRejoinDungeon(ServerLevel level, BlockPos around, StructureTemplate template, StructurePlaceSettings settings, int radiusBlocks) {
         BoundingBox boxAtZero = template.getBoundingBox(settings, BlockPos.ZERO);
         int sizeX = boxAtZero.getXSpan();
         int sizeY = boxAtZero.getYSpan();
@@ -989,6 +985,14 @@ public class CommonClass{
     }
 
     private static boolean isFlammable(LevelReader level, BlockPos pos) {
-        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight() || level.hasChunkAt(pos)) && level.getBlockState(pos).ignitedByLava();
+        return (pos.getY() < level.getMinY() || pos.getY() >= level.getMaxY() || level.hasChunkAt(pos)) && level.getBlockState(pos).ignitedByLava();
+    }
+
+    public static int rgbToInt(float[] rgb) {
+        int r = Math.round(rgb[0] * 255) & 0xFF;
+        int g = Math.round(rgb[1] * 255) & 0xFF;
+        int b = Math.round(rgb[2] * 255) & 0xFF;
+
+        return (r << 16) | (g << 8) | b;
     }
 }

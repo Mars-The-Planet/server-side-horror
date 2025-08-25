@@ -1,49 +1,41 @@
 package com.mars.serversidehorror;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SavedDataHorror extends SavedData {
-    private List<String> player_messages = new ArrayList<>();
-    private static final String keyPlayerMessages = "player_messages";
+    private List<String> player_messages;
     private boolean long_night;
+    public static final Codec<SavedDataHorror> CODEC = RecordCodecBuilder.create(
+            builder -> builder.group(
+                    Codec.BOOL.fieldOf("long_night").forGetter(SavedDataHorror::getLongNight),
+                    Codec.STRING.listOf().fieldOf("player_messages").forGetter(SavedDataHorror::getPlayerMessages)
+            ).apply(builder, SavedDataHorror::new)
+    );
+    public static final SavedDataType<SavedDataHorror> TYPE = new SavedDataType<>("saved_data_horror", SavedDataHorror::new, CODEC, null );
 
-    private SavedDataHorror() { super(); }
-
-    public static SavedDataHorror create() {
-        return new SavedDataHorror();
+    public SavedDataHorror() {
+        this(false, new ArrayList<>());
     }
 
-    public static SavedDataHorror load(CompoundTag tag, HolderLookup.Provider prov) {
-        SavedDataHorror data = SavedDataHorror.create();
+    public SavedDataHorror(boolean long_night, List<String> player_messages) {
+        this.long_night = long_night;
+        this.player_messages = player_messages;
+    }
 
-        ListTag listTag = (ListTag) tag.get(keyPlayerMessages);
-        if(listTag != null){
-            listTag.forEach(i -> {
-                if(i instanceof StringTag stringTag)
-                    data.player_messages.add(stringTag.getAsString());
-            });
-        }
-
-        data.long_night = tag.getBoolean("long_night");
+    public static SavedDataHorror get(MinecraftServer server) {
+        ServerLevel overworld = server.overworld();
+        DimensionDataStorage storage = overworld.getDataStorage();
+        SavedDataHorror data = storage.computeIfAbsent(TYPE);
         return data;
-    }
-
-    @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider prov) {
-        ListTag listTag = new ListTag();
-        player_messages.forEach(i -> listTag.add(StringTag.valueOf(i)));
-        tag.put(keyPlayerMessages, listTag);
-
-        tag.putBoolean("long_night", this.long_night);
-
-        return tag;
     }
 
     public void addMessage(String msg){
@@ -61,7 +53,6 @@ public class SavedDataHorror extends SavedData {
     public boolean getLongNight() {
         return long_night;
     }
-
 
     public void setLongNight(boolean value) {
         this.long_night = value;

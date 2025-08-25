@@ -53,8 +53,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -73,7 +71,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mars.serversidehorror.Constants.MOD_ID;
-import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
 import static com.mars.serversidehorror.ServersideHorrorConfig.grace_period;
 import static com.mars.serversidehorror.ServersideHorrorConfig.random_signs_texts;
 import static net.minecraft.commands.Commands.literal;
@@ -163,8 +160,7 @@ public class CommonClass{
                                 .executes(ctx -> {
                                     MinecraftServer server = ctx.getSource().getServer();
                                     ServerLevel level = server.overworld();
-                                    DimensionDataStorage storage = level.getDataStorage();
-                                    SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                                    SavedDataHorror savedData = SavedDataHorror.get(server);
                                     savedData.setLongNight(true);
                                     level.setDayTime(17999);
                                     ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
@@ -287,8 +283,7 @@ public class CommonClass{
                 literal("resetMassages")
                         .requires(src -> src.hasPermission(2))
                                 .executes(ctx -> {
-                                    DimensionDataStorage storage = (ctx.getSource().getServer()).overworld().getDataStorage();
-                                    SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                                    SavedDataHorror savedData = SavedDataHorror.get(ctx.getSource().getServer());
                                     savedData.setPlayerMessages(new ArrayList<>());
                                     ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
                                     return 1;
@@ -374,8 +369,7 @@ public class CommonClass{
 
         // is talker?
         if(canBeTalker && random.nextBoolean()) {
-            DimensionDataStorage storage = server.overworld().getDataStorage();
-            SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+            SavedDataHorror savedData = SavedDataHorror.get(server);
             FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(random.nextInt(savedData.getPlayerMessages().size() - 1)), random.nextInt(1, lifeTime - 1)});
         }
 
@@ -463,13 +457,13 @@ public class CommonClass{
         float xRot = Mth.wrapDegrees((float)(-(Mth.atan2(d1, d3) * 180.0F / (float)Math.PI)));
         float yRot = Mth.wrapDegrees((float)(Mth.atan2(d2, d0) * 180.0F / (float)Math.PI) - 90.0F);
 
-        fake.absMoveTo(spawnX, spawnY, spawnZ);
+        fake.absSnapTo(spawnX, spawnY, spawnZ);
         fake.setXRot(xRot);
         fake.setYRot(yRot);
         fake.setYHeadRot(yRot);
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
-        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> { /* no-op */ });
+        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> {}, (packet, list) -> {});
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);
 
@@ -522,7 +516,7 @@ public class CommonClass{
         ServerLevel level = target.serverLevel();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
-        lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
+        lightningbolt.snapTo(Vec3.atBottomCenterOf(target.blockPosition()));
         level.addFreshEntity(lightningbolt);
         spawnFakePlayer(target, "MarsThePlanet_", 20, true);
         return true;

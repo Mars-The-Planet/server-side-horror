@@ -42,7 +42,7 @@
 <p><code>/startRandomFire &lt;targets&gt; &lt;radius&gt; </code></p>
 <p><code>/startRandomFire &lt;targets&gt; &lt;maxRadius&gt; &lt;minRadius&gt; </code></p>
 <p><code>/placeSign &lt;targets&gt; &lt;maxRadius&gt; &lt;minRadius&gt; </code></p>
-<p><code>/resetMassages</code> this mod saves all chat massages send on the server so they can be used in the fake joiner event. With this command you can reset all the saved massages</p>
+<p><code>/resetMassages</code> this mod saves all chat massages sent on the server so they can be used in the fake joiner event. With this command you can reset all the saved massages</p>
 </details>
 <img src="https://i.imgur.com/ovhINHA.png" />
 <p>Q: How does this mod differ from From The Fog? <br>

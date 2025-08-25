@@ -8,15 +8,25 @@
 <p><img src="https://i.imgur.com/7ZLdvIu.png" /></p>
 <details>
 <summary><strong>SPOILERS</strong></summary>
-<p>You can configure this mod directly in-game or by editing the JSON file located at <code>config/serversidehorror.json</code> in your profile folder.</p>
+<p>This mod is highly configurable. You can disable or change the odds of each event. You can also add or remove names, chat massages or sign texts. You can configure this mod directly in-game or by editing the JSON file located at <code>config/serversidehorror.json</code> in your profile folder.</p>
+<img src="https://i.imgur.com/AIHBxNB.png"/>
 <img src="https://i.imgur.com/A74ARx3.png"/>
-<img src="https://i.imgur.com/vedOpXT.png"/>
+<img src="https://i.imgur.com/nwru9AH.png"/>
 <img src="https://i.imgur.com/fTG3Eaa.png"/>
 <img src="https://i.imgur.com/RT9afWq.png"/>
 <img src="https://i.imgur.com/jjM5Umc.png"/>
 <img src="https://i.imgur.com/efTzcVX.png"/>
-<img src="https://i.imgur.com/AajqWhG.png"/>
-<img src="https://i.imgur.com/RumU43j.png"/>
+<img src="https://i.imgur.com/ajisTCZ.png"/>
+<img src="https://i.imgur.com/va6aiKL.png"/>
+<img src="https://i.imgur.com/qEhj9o6.png"/>
+<img src="https://i.imgur.com/IyrZIP3.png"/>
+<img src="https://i.imgur.com/nLIrWiB.png"/>
+<img src="https://i.imgur.com/551wYZr.png"/>
+<img src="https://i.imgur.com/WH4tvBk.png"/>
+<img src="https://i.imgur.com/0o6PGFQ.png"/>
+<img src="https://i.imgur.com/v6bIeiF.png"/>
+<img src="https://i.imgur.com/5w8ulqe.png"/>
+<img src="https://i.imgur.com/74CZ7EI.png"/>
 <h3>Commands</h3>
 <p>You can use commands to target specific players and activate  specific events when you want.</p>
 <p><code>/addFakeJoiner &lt;fakesName&gt;</code></p>
@@ -27,6 +37,12 @@
 <p><code>/breakTorches &lt;targets&gt; &lt;minRadius&gt; &lt;maxRadius&gt;</code></p>
 <p><code>/replaceTorches &lt;targets&gt; &lt;minRadius&gt; &lt;maxRadius&gt;</code></p>
 <p><code>/fakeMining &lt;targets&gt; </code></p>
+<p><code>/fakeSteps &lt;targets&gt; </code></p>
+<p><code>/setupNewTrap &lt;targets&gt; </code></p>
+<p><code>/startRandomFire &lt;targets&gt; &lt;radius&gt; </code></p>
+<p><code>/startRandomFire &lt;targets&gt; &lt;maxRadius&gt; &lt;minRadius&gt; </code></p>
+<p><code>/placeSign &lt;targets&gt; &lt;maxRadius&gt; &lt;minRadius&gt; </code></p>
+<p><code>/resetMassages</code> this mod saves all chat massages send on the server so they can be used in the fake joiner event. With this command you can reset all the saved massages</p>
 </details>
 <img src="https://i.imgur.com/ovhINHA.png" />
 <p>Q: How does this mod differ from From The Fog? <br>

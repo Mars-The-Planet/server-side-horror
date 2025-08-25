@@ -39,7 +39,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
@@ -633,7 +632,6 @@ public class CommonClass{
 
         findPlacementRejoinDungeon(level, target.blockPosition(), template, settings, 80, target)
                 .ifPresent(origin -> {
-                    System.out.println("SLO TO " + origin);
                     template.placeInWorld(level, origin, origin, settings, random, 3);
                     listener.teleport(origin.getX() + 2.5, -58, origin.getZ() + 2.5, target.getYRot(), target.getXRot());
                 });
@@ -977,7 +975,6 @@ public class CommonClass{
         }
 
         if (valid.isEmpty()) return Optional.empty();
-        // picks a random one from the valid spots
         return Optional.of(valid.get(random.nextInt(valid.size())));
     }
 

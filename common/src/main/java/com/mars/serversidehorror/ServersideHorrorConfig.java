@@ -75,15 +75,17 @@ public class ServersideHorrorConfig extends DeimosConfig {
             "It hurts to\nbreathe\n \n ",
             "Buried alive\n \n \n ",
             "Still here\n \n \n ",
-            "EZ\n \n \n ");
+            "EZ\n \n \n ",
+            "Projekt_M\nwas here\n \n ",
+            "I am from Mars\n \n \n ");
 
-    @Entry public static int random_fake_joiner_chance = 500000;
+    @Entry public static int random_fake_joiner_chance = 720000;
     @Entry public static boolean random_fake_joiner_enable = true;
     @Entry public static List<String> random_fake_joiner_list = Lists.newArrayList("Projekt_M;BAF;wusup;Huh, wrong server;Hello?;I want to play with you;Want to be friends?");
 
-    @Entry public static int starer_chance = 120000;
+    @Entry public static int starer_chance = 420000;
     @Entry public static boolean starer_enable = true;
-    @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195");
+    @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
 
     @Entry public static boolean old_villages_enable = true;
     @Entry public static boolean traps_enable = true;

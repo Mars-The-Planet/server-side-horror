@@ -2,7 +2,6 @@ package com.mars.serversidehorror.mixin;
 
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.TickRateManager;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -24,10 +23,6 @@ public abstract class ServerLevelMixin {
         ServerLevel self = (ServerLevel)(Object)this;
         if(grace_period_applies_to_traps)   currentLevel = self;
         if(!isGracePeriodUp(self)) return;
-
-        TickRateManager tickratemanager = self.tickRateManager();
-        if(!tickratemanager.runsNormally())
-            return;
 
         long time = self.getLevelData().getDayTime();
         DimensionDataStorage storage = self.getServer().overworld().getDataStorage();

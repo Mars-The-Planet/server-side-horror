@@ -3,7 +3,6 @@ package com.mars.serversidehorror.mixin;
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,7 +25,7 @@ public abstract class ServerLevelMixin {
 
         long time = self.getLevelData().getDayTime();
         DimensionDataStorage storage = self.getServer().overworld().getDataStorage();
-        SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+        SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
 
         //Midnight - rolls a chance to be a long night
         if(time == 18000 && self.getLevelData().getGameRules().getBoolean(GameRules.RULE_DAYLIGHT) && long_night_enable){

@@ -7,7 +7,6 @@ import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerInfo;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,7 +16,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
@@ -38,7 +36,7 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, CommandSource, AutoCloseable{
+public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements CommandSource, AutoCloseable{
     @Shadow public abstract PlayerList getPlayerList();
     @Shadow private int tickCount;
     @Shadow @Final private RandomSource random;
@@ -218,7 +216,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Inject(at = @At("HEAD"), method = "logChatMessage")
     private void logChatMessage(Component content, ChatType.Bound boundChatType, String header, CallbackInfo ci) {
         DimensionDataStorage storage = ((MinecraftServer)(Object) this).overworld().getDataStorage();
-        SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+        SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
         savedData.addMessage(content.getString());
     }
 

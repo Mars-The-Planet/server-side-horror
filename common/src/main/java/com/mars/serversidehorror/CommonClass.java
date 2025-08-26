@@ -17,15 +17,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundEvents;
@@ -36,7 +34,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
@@ -161,7 +158,7 @@ public class CommonClass {
                             MinecraftServer server = ctx.getSource().getServer();
                             ServerLevel level = server.overworld();
                             DimensionDataStorage storage = level.getDataStorage();
-                            SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                            SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setLongNight(true);
                             level.setDayTime(17999);
                             ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
@@ -285,7 +282,7 @@ public class CommonClass {
                         .requires(src -> src.hasPermission(2))
                         .executes(ctx -> {
                             DimensionDataStorage storage = (ctx.getSource().getServer()).overworld().getDataStorage();
-                            SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
+                            SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setPlayerMessages(new ArrayList<>());
                             ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
                             return 1;
@@ -366,7 +363,7 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0);
-        ServerPlayer fake = new ServerPlayer(server, level, profile, sample.clientInformation());
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
@@ -384,9 +381,7 @@ public class CommonClass {
 
         if (canBeTalker && random.nextBoolean()) {
             DimensionDataStorage storage = level.getDataStorage();
-            // 1.20.4 uses the 2-arg Factory (no DataFixTypes arg)
-            SavedDataHorror data = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-
+            SavedDataHorror data = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
             List<String> msgs = data.getPlayerMessages();
             if (!msgs.isEmpty()) {
                 String msg = msgs.get(random.nextInt(msgs.size()));
@@ -402,7 +397,7 @@ public class CommonClass {
         if (server == null) return false;
 
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
-        if (players.isEmpty()) return false; // need someone online to borrow connection/client info
+        if (players.isEmpty()) return false;
 
         // vanilla-style join toast
         Component joinMsg = Component.translatable("multiplayer.player.joined", name);
@@ -415,15 +410,12 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0); // borrow client info + connection
-        ServerPlayer fake = new ServerPlayer(server, level, profile, sample.clientInformation());
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
-        // 1.20.4 quirk: temporarily swap in a real connection so the packets serialize cleanly
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
-        ClientboundPlayerInfoUpdatePacket addInfo =
-                new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
-        ClientboundPlayerInfoUpdatePacket updateListed =
-                new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+        ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
+        ClientboundPlayerInfoUpdatePacket updateListed = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
         fake.connection = savedConn;
 
         // broadcast once each (no double-send)
@@ -459,7 +451,7 @@ public class CommonClass {
         String[] skin = getSkin(name);
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
-        ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
         // hide nametag
         if (hideNameTag) {
@@ -495,25 +487,16 @@ public class CommonClass {
         fake.setYRot(yRot);
         fake.setYHeadRot(yRot);
 
-        ServerGamePacketListenerImpl saved = fake.connection;
-        fake.connection = target.connection;
-        ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
-        fake.connection = saved;
+        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake));
+        server.getPlayerList().broadcastAll(new ClientboundAddPlayerPacket(fake));
 
-        // spawn packet (your long-args ctor is fine on 1.20.4)
-        ClientboundAddEntityPacket spawnPacket = new ClientboundAddEntityPacket(fake.getId(), fake.getUUID(), x, y, z, fake.getXRot(), fake.getYRot(), fake.getType(), 0, fake.getDeltaMovement(), fake.getYHeadRot());
+        List<SynchedEntityData.DataValue<?>> values = fake.getEntityData().getNonDefaultValues();
+        if (values != null && !values.isEmpty()) {
+            server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values));
+        }
 
-        // broadcast
-        server.getPlayerList().broadcastAll(addInfo);
-        server.getPlayerList().broadcastAll(spawnPacket);
-
-        // spawn entity for clients
-        ClientboundAddEntityPacket addEntity = new ClientboundAddEntityPacket(fake.getId(), fake.getUUID(), x, y, z, xRot, yRot, fake.getType(), 0, fake.getDeltaMovement(), fake.getYHeadRot());
-
-        // broadcast packets
-        server.getPlayerList().broadcastAll(addInfo);
-        server.getPlayerList().broadcastAll(addEntity);
-        server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), fake.getEntityData().packDirty()));
+        byte headYawPacked = (byte) Mth.floor(fake.getYHeadRot() * 256.0F / 360.0F);
+        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(fake, headYawPacked));
 
         FAKE_PLAYERS.put(fake, 24000);
     }

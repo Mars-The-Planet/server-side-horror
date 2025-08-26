@@ -3,7 +3,6 @@ package com.mars.serversidehorror.mixin;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +16,7 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 @Mixin(PlayerList.class)
 public abstract class PlayerListMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
-    private void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
+    private void placeNewPlayer(Connection connection, ServerPlayer player, CallbackInfo ci) {
         PlayerList self = (PlayerList)(Object)this;
         MinecraftServer server = self.getServer();
         if(!isGracePeriodUp(server.overworld()))

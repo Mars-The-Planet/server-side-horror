@@ -13,8 +13,6 @@ public class SavedDataHorror extends SavedData {
     private static final String keyPlayerMessages = "player_messages";
     private boolean long_night;
 
-    private SavedDataHorror() { super(); }
-
     public static SavedDataHorror create() {
         return new SavedDataHorror();
     }

@@ -117,7 +117,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if(!TORCHES_TO_BE_BROKEN.isEmpty()) {
             if(last_torch_breaking == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_BROKEN.entrySet().iterator().next();
-                ServerLevel level = nextTorch.getValue().serverLevel();
+                ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
                 level.destroyBlock(target, true);
                 TORCHES_TO_BE_BROKEN.remove(target);
@@ -130,7 +130,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if(!TORCHES_TO_BE_REPLACED.isEmpty()) {
             if(last_torch_replaced == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_REPLACED.entrySet().iterator().next();
-                ServerLevel level = nextTorch.getValue().serverLevel();
+                ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
                 if(level.getBlockState(target).is(Blocks.WALL_TORCH))
                     level.setBlock(target, Blocks.REDSTONE_WALL_TORCH.withPropertiesOf(level.getBlockState(target)), 3);
@@ -148,7 +148,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             if(last_fake_block_broken == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextBlock = BLOCKS_TO_BE_MINED_FAKE.entrySet().iterator().next();
                 BlockPos target = nextBlock.getKey();
-                ServerLevel level = nextBlock.getValue().serverLevel();
+                ServerLevel level = nextBlock.getValue().level();
                 level.playSound(null, target, level.getBlockState(target).getSoundType().getBreakSound(), SoundSource.BLOCKS, 1, 1);
                 BLOCKS_TO_BE_MINED_FAKE.remove(target);
                 last_fake_block_broken = 10;
@@ -161,7 +161,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             if(last_fake_block_stepped_on == 0) {
                 Map.Entry<BlockPos, ServerPlayer> nextBlock = BLOCKS_TO_BE_STEPPED_ON_FAKE.entrySet().iterator().next();
                 BlockPos target = nextBlock.getKey();
-                ServerLevel level = nextBlock.getValue().serverLevel();
+                ServerLevel level = nextBlock.getValue().level();
                 level.playSound(null, target, level.getBlockState(target).getSoundType().getStepSound(), SoundSource.BLOCKS, 1, 1);
                 BLOCKS_TO_BE_STEPPED_ON_FAKE.remove(target);
                 last_fake_block_stepped_on = 7;

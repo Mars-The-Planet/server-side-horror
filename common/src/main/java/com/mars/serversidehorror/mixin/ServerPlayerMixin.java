@@ -19,7 +19,7 @@ public class ServerPlayerMixin {
     private void tick(CallbackInfo ci) {
         ServerPlayer self = (ServerPlayer)(Object)this;
 
-        if(isGracePeriodUp(self.serverLevel())) {
+        if(isGracePeriodUp(self.level())) {
             if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self))
                 spawnFakePlayer(self, "MarsThePlanet_", 40, true);
 

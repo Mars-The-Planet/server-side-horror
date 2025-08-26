@@ -292,7 +292,7 @@ public class CommonClass{
 
     // ------EVENTS------
     public static void particleJumpScare(ServerPlayer target){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
 
         Vec3 eyePos = target.getEyePosition(1.0F);
         Vec3 forward = target.getLookAngle().normalize();
@@ -417,7 +417,7 @@ public class CommonClass{
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 
         // create fake player
@@ -489,7 +489,7 @@ public class CommonClass{
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
@@ -501,7 +501,7 @@ public class CommonClass{
     }
 
     public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
@@ -513,7 +513,7 @@ public class CommonClass{
     }
 
     public static boolean hitPlayerLightning(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
         lightningbolt.snapTo(Vec3.atBottomCenterOf(target.blockPosition()));
@@ -523,7 +523,7 @@ public class CommonClass{
     }
 
     public static void fakeMining(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
         int radius = 10;
@@ -554,7 +554,7 @@ public class CommonClass{
     }
 
     public static void fakeSteps(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
         int radius = 10;
@@ -580,7 +580,7 @@ public class CommonClass{
     }
 
     public static void joinOnBedrock(ServerPlayer target, ServerGamePacketListenerImpl listener) {
-        MinecraftServer server = target.server;
+        MinecraftServer server = target.getServer();
         BlockPos playerPos = new BlockPos((int)target.getX(), 319, (int)target.getZ());
 
 
@@ -589,8 +589,8 @@ public class CommonClass{
     }
 
     public static void placeSmallTrap(ServerPlayer target) {
-        MinecraftServer server = target.server;
-        ServerLevel level = target.serverLevel();
+        MinecraftServer server = target.getServer();
+        ServerLevel level = target.level();
 
         StructureTemplateManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
@@ -603,7 +603,7 @@ public class CommonClass{
     }
 
     public static void startFire(ServerPlayer target, int radius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
         if(targetPos.isEmpty()) return;
         BlockPos pos = targetPos.get();
@@ -612,8 +612,8 @@ public class CommonClass{
     }
 
     public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
-        MinecraftServer server = target.server;
-        ServerLevel level = target.serverLevel();
+        MinecraftServer server = target.getServer();
+        ServerLevel level = target.level();
         StructureTemplateManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
@@ -628,7 +628,7 @@ public class CommonClass{
     }
 
     public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
         BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
@@ -645,7 +645,7 @@ public class CommonClass{
     }
 
     public static boolean placeSign(ServerPlayer target, int maxRadius, int minRadius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
         BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
@@ -692,7 +692,7 @@ public class CommonClass{
     }
 
     public static boolean canSeeBlock(ServerPlayer player, BlockPos pos) {
-        ServerLevel world = player.serverLevel();
+        ServerLevel world = player.level();
         ClipContext ctx = new ClipContext(player.getEyePosition(), Vec3.atCenterOf(pos), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player);
         HitResult result = world.clip(ctx);
 

@@ -473,12 +473,12 @@ public class CommonClass{
         fake.setYHeadRot(yRot);
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
-        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> { /* no-op */ });
+        // ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> { /* no-op */ });
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);
 
         // updated players
-        ClientboundAddEntityPacket spawnPacket = (ClientboundAddEntityPacket) fake.getAddEntityPacket(wrapper);
+        ClientboundAddEntityPacket spawnPacket = (ClientboundAddEntityPacket) fake.getAddEntityPacket();
         ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
 
         server.getPlayerList().broadcastAll(addInfo);
@@ -603,7 +603,7 @@ public class CommonClass{
         ServerLevel level = target.serverLevel();
 
         StructureTemplateManager manager = server.getStructureManager();
-        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
+        Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();
@@ -625,7 +625,7 @@ public class CommonClass{
         MinecraftServer server = target.server;
         ServerLevel level = target.serverLevel();
         StructureTemplateManager manager = server.getStructureManager();
-        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
+        Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();

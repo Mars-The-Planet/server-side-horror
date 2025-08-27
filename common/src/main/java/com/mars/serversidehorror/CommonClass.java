@@ -37,7 +37,6 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
-import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -46,7 +45,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
@@ -98,7 +96,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     String fakesName = StringArgumentType.getString(ctx, "fakesName");
                                     addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Added a fake player " + fakesName), true);
+                                    ctx.getSource().sendSuccess(Component.literal("Added a fake player " + fakesName), true);
                                     return 1;
                                 })));
 
@@ -115,7 +113,7 @@ public class CommonClass {
                                                             int radius = IntegerArgumentType.getInteger(ctx, "radius");
                                                             boolean hideNametag = BoolArgumentType.getBool(ctx, "hideNametag");
                                                             targets.forEach(target -> spawnFakePlayer(target, fakesName, radius, hideNametag));
-                                                            ctx.getSource().sendSuccess(() -> Component.literal("Spawned a fake player " + fakesName), true);
+                                                            ctx.getSource().sendSuccess(Component.literal("Spawned a fake player " + fakesName), true);
                                                             return 1;
                                                         }))))));
 
@@ -125,7 +123,7 @@ public class CommonClass {
                         .executes(ctx -> {
                             Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                             targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
-                            ctx.getSource().sendSuccess(() -> Component.literal("Spawned a Herobrine near players"), true);
+                            ctx.getSource().sendSuccess(Component.literal("Spawned a Herobrine near players"), true);
                             return 1;
                         }));
 
@@ -136,7 +134,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_HIT_BY_LIGHTNING.addAll(targets);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Hit players with lightning"), true);
+                                    ctx.getSource().sendSuccess(Component.literal("Hit players with lightning"), true);
                                     return 1;
                                 })));
 
@@ -147,7 +145,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_JUMP_SCARED.addAll(targets);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Jumped scared players"), true);
+                                    ctx.getSource().sendSuccess(Component.literal("Jumped scared players"), true);
                                     return 1;
                                 })));
 
@@ -161,7 +159,7 @@ public class CommonClass {
                             SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setLongNight(true);
                             level.setDayTime(17999);
-                            ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
+                            ctx.getSource().sendSuccess(Component.literal("Set Long Night"), true);
                             return 1;
                         }));
 
@@ -176,7 +174,7 @@ public class CommonClass {
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     targets.forEach(target -> breakTorches(target, minRadius, maxRadius));
-                                                    ctx.getSource().sendSuccess(() -> Component.literal("Broke torches near players"), true);
+                                                    ctx.getSource().sendSuccess(Component.literal("Broke torches near players"), true);
                                                     return 1;
                                                 })))));
 
@@ -191,7 +189,7 @@ public class CommonClass {
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     targets.forEach(target -> replaceTorches(target, minRadius, maxRadius));
-                                                    ctx.getSource().sendSuccess(() -> Component.literal("Replaced torches near players by redstone torches"), true);
+                                                    ctx.getSource().sendSuccess(Component.literal("Replaced torches near players by redstone torches"), true);
                                                     return 1;
                                                 })))));
 
@@ -202,7 +200,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> fakeMining(target));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake mining noises"), true);
+                                    ctx.getSource().sendSuccess(Component.literal("Players will hear fake mining noises"), true);
                                     return 1;
                                 })));
 
@@ -213,7 +211,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> fakeSteps(target));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake step noises"), true);
+                                    ctx.getSource().sendSuccess(Component.literal("Players will hear fake step noises"), true);
                                     return 1;
                                 })));
 
@@ -225,7 +223,7 @@ public class CommonClass {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
 
                                     targets.forEach(target -> placeSmallTrap(target));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("A new trap will be be set up near these players"), true);
+                                    ctx.getSource().sendSuccess(Component.literal("A new trap will be be set up near these players"), true);
                                     return 1;
                                 })));
 
@@ -238,7 +236,7 @@ public class CommonClass {
                                             Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                             int radius = IntegerArgumentType.getInteger(ctx, "radius");
                                             targets.forEach(target -> startFire(target, radius));
-                                            ctx.getSource().sendSuccess(() -> Component.literal("A random fire will be started near these players"), true);
+                                            ctx.getSource().sendSuccess(Component.literal("A random fire will be started near these players"), true);
                                             return 1;
                                         }))));
 
@@ -253,7 +251,7 @@ public class CommonClass {
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     targets.forEach(target -> removeLeaves(target, maxRadius, minRadius));
-                                                    ctx.getSource().sendSuccess(() -> Component.literal("Leaves will be removed around players"), true);
+                                                    ctx.getSource().sendSuccess(Component.literal("Leaves will be removed around players"), true);
                                                     return 1;
                                                 })))));
 
@@ -270,9 +268,9 @@ public class CommonClass {
                                                     for(ServerPlayer target : targets){
                                                         boolean canPlace = placeSign(target, maxRadius, minRadius);
                                                         if(canPlace)
-                                                            ctx.getSource().sendSuccess(() -> Component.literal("Signs were placed near player " + target.getName().getString()), true);
+                                                            ctx.getSource().sendSuccess(Component.literal("Signs were placed near player " + target.getName().getString()), true);
                                                         else
-                                                            ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place sing near player " + target.getName().getString()), true);
+                                                            ctx.getSource().sendSuccess(Component.literal("Couldn't place sing near player " + target.getName().getString()), true);
                                                     }
                                                     return 1;
                                                 })))));
@@ -284,14 +282,14 @@ public class CommonClass {
                             DimensionDataStorage storage = (ctx.getSource().getServer()).overworld().getDataStorage();
                             SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setPlayerMessages(new ArrayList<>());
-                            ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
+                            ctx.getSource().sendSuccess(Component.literal("Successfully reset all messages"), true);
                             return 1;
                         }));
     }
 
     // ------EVENTS------
     public static void particleJumpScare(ServerPlayer target){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
 
         Vec3 eyePos = target.getEyePosition(1.0F);
         Vec3 forward = target.getLookAngle().normalize();
@@ -444,7 +442,7 @@ public class CommonClass {
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 
         // skin
@@ -510,7 +508,7 @@ public class CommonClass {
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
@@ -522,7 +520,7 @@ public class CommonClass {
     }
 
     public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
@@ -534,7 +532,7 @@ public class CommonClass {
     }
 
     public static boolean hitPlayerLightning(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level);
         lightningbolt.moveTo(Vec3.atBottomCenterOf(target.blockPosition()));
@@ -544,7 +542,7 @@ public class CommonClass {
     }
 
     public static void fakeMining(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
 
         List<BlockPos> validPos = new ArrayList<>();
         int radius = 10;
@@ -575,7 +573,7 @@ public class CommonClass {
     }
 
     public static void fakeSteps(ServerPlayer target) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
 
         List<BlockPos> validPos = new ArrayList<>();
         int radius = 10;
@@ -611,7 +609,7 @@ public class CommonClass {
 
     public static void placeSmallTrap(ServerPlayer target) {
         MinecraftServer server = target.server;
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
 
         StructureTemplateManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
@@ -624,7 +622,7 @@ public class CommonClass {
     }
 
     public static void startFire(ServerPlayer target, int radius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
         if(targetPos.isEmpty()) return;
         BlockPos pos = targetPos.get();
@@ -634,7 +632,7 @@ public class CommonClass {
 
     public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
         MinecraftServer server = target.server;
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         StructureTemplateManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
@@ -649,7 +647,7 @@ public class CommonClass {
     }
 
     public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         BlockPos playerPos = target.getOnPos();
 
         BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
@@ -666,7 +664,7 @@ public class CommonClass {
     }
 
     public static boolean placeSign(ServerPlayer target, int maxRadius, int minRadius) {
-        ServerLevel level = target.serverLevel();
+        ServerLevel level = target.getLevel();
         BlockPos playerPos = target.getOnPos();
 
         BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
@@ -689,13 +687,18 @@ public class CommonClass {
         level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
             String[] lines = random_signs_texts.get(random.nextInt(random_signs_texts.size())).split("\\r?\\n");
-            SignText text = sign.getText(true)
-                    .setMessage(0, Component.literal(lines[0]))
-                    .setMessage(1, Component.literal(lines[1]))
-                    .setMessage(2, Component.literal(lines[2]))
-                    .setMessage(3, Component.literal(lines[3]));
+            sign.setMessage(0, Component.literal(lines[0]));
+            sign.setMessage(1, Component.literal(lines[1]));
+            sign.setMessage(2, Component.literal(lines[2]));
+            sign.setMessage(3, Component.literal(lines[3]));
 
-            sign.setText(text, true);
+//            SignText text = sign.getText(true)
+//                    .setMessage(0, Component.literal(lines[0]))
+//                    .setMessage(1, Component.literal(lines[1]))
+//                    .setMessage(2, Component.literal(lines[2]))
+//                    .setMessage(3, Component.literal(lines[3]));
+//
+//            sign.setText(text, true);
             sign.setChanged();
             level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);
         }
@@ -713,7 +716,7 @@ public class CommonClass {
     }
 
     public static boolean canSeeBlock(ServerPlayer player, BlockPos pos) {
-        ServerLevel world = player.serverLevel();
+        ServerLevel world = player.getLevel();
         ClipContext ctx = new ClipContext(player.getEyePosition(), Vec3.atCenterOf(pos), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player);
         HitResult result = world.clip(ctx);
 
@@ -1000,6 +1003,6 @@ public class CommonClass {
     }
 
     private static boolean isFlammable(LevelReader level, BlockPos pos) {
-        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight() || level.hasChunkAt(pos)) && level.getBlockState(pos).ignitedByLava();
+        return (pos.getY() < level.getMinBuildHeight() || pos.getY() >= level.getMaxBuildHeight() || level.hasChunkAt(pos)) && level.getBlockState(pos).getMaterial().isFlammable();
     }
 }

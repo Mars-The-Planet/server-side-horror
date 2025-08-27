@@ -22,7 +22,7 @@ public abstract class PlayerListMixin {
         if(!isGracePeriodUp(server.overworld()))
             return;
 
-        if(player.serverLevel() != server.overworld())
+        if(player.getLevel() != server.overworld())
             return;
 
         ServerGamePacketListenerImpl listener = (ServerGamePacketListenerImpl)connection.getPacketListener();

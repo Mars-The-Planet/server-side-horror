@@ -1,5 +1,6 @@
 {
   "fallback": "minecraft:empty",
+  "name": "serversidehorror:village_old/plains/town_centres",
   "elements": [
     {
       "weight": 1,

@@ -3,7 +3,7 @@ package com.mars.serversidehorror.mixin;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.ResourceOrTagKeyArgument;
+import net.minecraft.commands.arguments.ResourceOrTagLocationArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.LocateCommand;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -18,7 +18,7 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 @Mixin(LocateCommand.class)
 public class LocateCommandMixin {
     @Inject(method = "locateStructure", at = @At("HEAD"), cancellable = true)
-    private static void locateStructure(CommandSourceStack source, ResourceOrTagKeyArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
+    private static void locateStructure(CommandSourceStack source, ResourceOrTagLocationArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
         if(!old_villages_enable && structure.asPrintable().equals("serversidehorror:village_old_plains"))
             throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
 

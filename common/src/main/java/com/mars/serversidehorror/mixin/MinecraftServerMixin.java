@@ -3,6 +3,7 @@ package com.mars.serversidehorror.mixin;
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.ChatMessageContent;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
@@ -91,7 +92,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             if (ticksLeft <= 0) {
 //                DimensionDataStorage storage = (self).overworld().getDataStorage();
 //                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-                (self).getPlayerList().broadcastChatMessage(PlayerChatMessage.system(msg), fake, ChatType.bind(ChatType.CHAT, fake));
+                (self).getPlayerList().broadcastChatMessage(PlayerChatMessage.system(new ChatMessageContent(msg)), fake, ChatType.bind(ChatType.CHAT, fake));
                 talkerIt.remove();
             } else {
                 entry.setValue(new Object[]{msg, ticksLeft});

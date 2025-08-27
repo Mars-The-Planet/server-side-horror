@@ -9,6 +9,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.math.Vector3f;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -53,7 +54,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
-import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -316,7 +316,7 @@ public class CommonClass {
 
         List<Vec3> eyes = new ArrayList<>();
 
-        level.playSound(null, target.getOnPos(), SoundEvents.AMBIENT_CAVE.value(), SoundSource.AMBIENT, 1f, 1f);
+        level.playSound(null, target.getOnPos(), SoundEvents.AMBIENT_CAVE, SoundSource.AMBIENT, 1f, 1f);
 
         for (int i = 0; i < 50; i++) {
             for (int y = 0; y < 8; y++) {
@@ -361,13 +361,13 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0);
-        ServerPlayer fake = new ServerPlayer(server, level, profile);
+        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
 
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
 
-        ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
-        ClientboundPlayerInfoUpdatePacket updateListed = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+        ClientboundPlayerInfoPacket addInfo = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, fake);
+        ClientboundPlayerInfoPacket updateListed = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, fake);
 
         fake.connection = savedConn;
 
@@ -408,12 +408,12 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0); // borrow client info + connection
-        ServerPlayer fake = new ServerPlayer(server, level, profile);
+        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
 
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
-        ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
-        ClientboundPlayerInfoUpdatePacket updateListed = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
+        ClientboundPlayerInfoPacket addInfo = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, fake);
+        ClientboundPlayerInfoPacket updateListed = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME, fake);
         fake.connection = savedConn;
 
         // broadcast once each (no double-send)
@@ -434,7 +434,7 @@ public class CommonClass {
         Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
         server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
-        ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
+        ClientboundPlayerInfoPacket removeInfo = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, fake);
         server.getPlayerList().broadcastAll(removeInfo);
     }
 
@@ -449,7 +449,7 @@ public class CommonClass {
         String[] skin = getSkin(name);
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
-        ServerPlayer fake = new ServerPlayer(server, level, profile);
+        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
 
         // hide nametag
         if (hideNameTag) {
@@ -485,12 +485,13 @@ public class CommonClass {
         fake.setYRot(yRot);
         fake.setYHeadRot(yRot);
 
-        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake));
+        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.ADD_PLAYER, fake));
         server.getPlayerList().broadcastAll(new ClientboundAddPlayerPacket(fake));
 
-        List<SynchedEntityData.DataValue<?>> values = fake.getEntityData().getNonDefaultValues();
-        if (values != null && !values.isEmpty()) {
-            server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values));
+        //List<SynchedEntityData.DataItem<?>> values = fake.getEntityData().getAll();
+        SynchedEntityData values = fake.getEntityData();
+        if (!values.isEmpty()) {
+            server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values, true));
         }
 
         byte headYawPacked = (byte) Mth.floor(fake.getYHeadRot() * 256.0F / 360.0F);
@@ -500,7 +501,7 @@ public class CommonClass {
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
-        ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
+        ClientboundPlayerInfoPacket removeInfo = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, fake);
         ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
         fake.remove(Entity.RemovalReason.DISCARDED);
         server.getPlayerList().broadcastAll(removeEntity);
@@ -655,7 +656,7 @@ public class CommonClass {
         Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
 
         for(BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if(pos.closerToCenterThan(new Vec3(playerPos.getX(), playerPos.getY(), playerPos.getZ()), minRadius)) continue;
             if (!(level.getBlockState(pos).getBlock() instanceof LeavesBlock)) continue;
             BlockState state = level.getBlockState(pos);
             if(state.getValue(LeavesBlock.PERSISTENT)) continue;
@@ -673,7 +674,7 @@ public class CommonClass {
         List<BlockPos> candidates = new ArrayList<>();
 
         for (BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if(pos.closerToCenterThan(new Vec3(playerPos.getX(), playerPos.getY(), playerPos.getZ()), minRadius)) continue;
             if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
@@ -692,13 +693,6 @@ public class CommonClass {
             sign.setMessage(2, Component.literal(lines[2]));
             sign.setMessage(3, Component.literal(lines[3]));
 
-//            SignText text = sign.getText(true)
-//                    .setMessage(0, Component.literal(lines[0]))
-//                    .setMessage(1, Component.literal(lines[1]))
-//                    .setMessage(2, Component.literal(lines[2]))
-//                    .setMessage(3, Component.literal(lines[3]));
-//
-//            sign.setText(text, true);
             sign.setChanged();
             level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);
         }

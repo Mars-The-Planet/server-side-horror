@@ -1,5 +1,6 @@
 {
   "fallback": "minecraft:empty",
+  "name": "serversidehorror:rejoin_dungeon",
   "elements": [
     {
       "weight": 1,

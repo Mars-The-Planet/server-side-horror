@@ -1,5 +1,6 @@
 {
   "fallback": "minecraft:empty",
+  "name": "serversidehorror:traps/tnt_minecart_bottom",
   "elements": [
     {
       "weight": 1,

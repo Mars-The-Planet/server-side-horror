@@ -1,5 +1,6 @@
 {
   "fallback": "minecraft:empty",
+  "name": "serversidehorror:traps/trap_11",
   "elements": [
     {
       "weight": 1,

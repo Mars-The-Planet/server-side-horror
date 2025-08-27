@@ -11,6 +11,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.math.Vector3f;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -18,7 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.*;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +31,6 @@ import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
@@ -43,9 +43,9 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
@@ -82,7 +82,7 @@ public class CommonClass {
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_STEPPED_ON_FAKE = new HashMap<>();
     public static ServerLevel currentLevel;
 
-    public static RandomSource random = RandomSource.create();
+    public static Random random = new Random();
 
     public static void init() {
         DeimosConfig.init(Constants.MOD_ID, ServersideHorrorConfig.class);
@@ -96,7 +96,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     String fakesName = StringArgumentType.getString(ctx, "fakesName");
                                     addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
-                                    ctx.getSource().sendSuccess(Component.literal("Added a fake player " + fakesName), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("Added a fake player " + fakesName), true);
                                     return 1;
                                 })));
 
@@ -113,7 +113,7 @@ public class CommonClass {
                                                             int radius = IntegerArgumentType.getInteger(ctx, "radius");
                                                             boolean hideNametag = BoolArgumentType.getBool(ctx, "hideNametag");
                                                             targets.forEach(target -> spawnFakePlayer(target, fakesName, radius, hideNametag));
-                                                            ctx.getSource().sendSuccess(Component.literal("Spawned a fake player " + fakesName), true);
+                                                            ctx.getSource().sendSuccess(new TextComponent("Spawned a fake player " + fakesName), true);
                                                             return 1;
                                                         }))))));
 
@@ -123,7 +123,7 @@ public class CommonClass {
                         .executes(ctx -> {
                             Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                             targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
-                            ctx.getSource().sendSuccess(Component.literal("Spawned a Herobrine near players"), true);
+                            ctx.getSource().sendSuccess(new TextComponent("Spawned a Herobrine near players"), true);
                             return 1;
                         }));
 
@@ -134,7 +134,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_HIT_BY_LIGHTNING.addAll(targets);
-                                    ctx.getSource().sendSuccess(Component.literal("Hit players with lightning"), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("Hit players with lightning"), true);
                                     return 1;
                                 })));
 
@@ -145,7 +145,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_JUMP_SCARED.addAll(targets);
-                                    ctx.getSource().sendSuccess(Component.literal("Jumped scared players"), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("Jumped scared players"), true);
                                     return 1;
                                 })));
 
@@ -159,7 +159,7 @@ public class CommonClass {
                             SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setLongNight(true);
                             level.setDayTime(17999);
-                            ctx.getSource().sendSuccess(Component.literal("Set Long Night"), true);
+                            ctx.getSource().sendSuccess(new TextComponent("Set Long Night"), true);
                             return 1;
                         }));
 
@@ -174,7 +174,7 @@ public class CommonClass {
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     targets.forEach(target -> breakTorches(target, minRadius, maxRadius));
-                                                    ctx.getSource().sendSuccess(Component.literal("Broke torches near players"), true);
+                                                    ctx.getSource().sendSuccess(new TextComponent("Broke torches near players"), true);
                                                     return 1;
                                                 })))));
 
@@ -189,7 +189,7 @@ public class CommonClass {
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     targets.forEach(target -> replaceTorches(target, minRadius, maxRadius));
-                                                    ctx.getSource().sendSuccess(Component.literal("Replaced torches near players by redstone torches"), true);
+                                                    ctx.getSource().sendSuccess(new TextComponent("Replaced torches near players by redstone torches"), true);
                                                     return 1;
                                                 })))));
 
@@ -200,7 +200,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> fakeMining(target));
-                                    ctx.getSource().sendSuccess(Component.literal("Players will hear fake mining noises"), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("Players will hear fake mining noises"), true);
                                     return 1;
                                 })));
 
@@ -211,7 +211,7 @@ public class CommonClass {
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> fakeSteps(target));
-                                    ctx.getSource().sendSuccess(Component.literal("Players will hear fake step noises"), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("Players will hear fake step noises"), true);
                                     return 1;
                                 })));
 
@@ -223,7 +223,7 @@ public class CommonClass {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
 
                                     targets.forEach(target -> placeSmallTrap(target));
-                                    ctx.getSource().sendSuccess(Component.literal("A new trap will be be set up near these players"), true);
+                                    ctx.getSource().sendSuccess(new TextComponent("A new trap will be be set up near these players"), true);
                                     return 1;
                                 })));
 
@@ -236,7 +236,7 @@ public class CommonClass {
                                             Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                             int radius = IntegerArgumentType.getInteger(ctx, "radius");
                                             targets.forEach(target -> startFire(target, radius));
-                                            ctx.getSource().sendSuccess(Component.literal("A random fire will be started near these players"), true);
+                                            ctx.getSource().sendSuccess(new TextComponent("A random fire will be started near these players"), true);
                                             return 1;
                                         }))));
 
@@ -251,7 +251,7 @@ public class CommonClass {
                                                     int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
                                                     int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
                                                     targets.forEach(target -> removeLeaves(target, maxRadius, minRadius));
-                                                    ctx.getSource().sendSuccess(Component.literal("Leaves will be removed around players"), true);
+                                                    ctx.getSource().sendSuccess(new TextComponent("Leaves will be removed around players"), true);
                                                     return 1;
                                                 })))));
 
@@ -268,9 +268,9 @@ public class CommonClass {
                                                     for(ServerPlayer target : targets){
                                                         boolean canPlace = placeSign(target, maxRadius, minRadius);
                                                         if(canPlace)
-                                                            ctx.getSource().sendSuccess(Component.literal("Signs were placed near player " + target.getName().getString()), true);
+                                                            ctx.getSource().sendSuccess(new TextComponent("Signs were placed near player " + target.getName().getString()), true);
                                                         else
-                                                            ctx.getSource().sendSuccess(Component.literal("Couldn't place sing near player " + target.getName().getString()), true);
+                                                            ctx.getSource().sendSuccess(new TextComponent("Couldn't place sing near player " + target.getName().getString()), true);
                                                     }
                                                     return 1;
                                                 })))));
@@ -282,7 +282,7 @@ public class CommonClass {
                             DimensionDataStorage storage = (ctx.getSource().getServer()).overworld().getDataStorage();
                             SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
                             savedData.setPlayerMessages(new ArrayList<>());
-                            ctx.getSource().sendSuccess(Component.literal("Successfully reset all messages"), true);
+                            ctx.getSource().sendSuccess(new TextComponent("Successfully reset all messages"), true);
                             return 1;
                         }));
     }
@@ -351,8 +351,8 @@ public class CommonClass {
         if (players.isEmpty()) return false;
 
         // broadcast vanilla-style join message
-        Component joinMsg = Component.translatable("multiplayer.player.joined", name);
-        server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
+        MutableComponent joinMsg = new TranslatableComponent("multiplayer.player.joined", name);
+        server.getPlayerList().broadcastMessage(joinMsg.withStyle(ChatFormatting.YELLOW), ChatType.SYSTEM, Util.NIL_UUID);
 
         // make the fake player
         ServerLevel level = server.overworld();
@@ -361,7 +361,7 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0);
-        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
@@ -398,8 +398,8 @@ public class CommonClass {
         if (players.isEmpty()) return false;
 
         // vanilla-style join toast
-        Component joinMsg = Component.translatable("multiplayer.player.joined", name);
-        server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
+        MutableComponent joinMsg = new TranslatableComponent("multiplayer.player.joined", name);
+        server.getPlayerList().broadcastMessage(joinMsg.withStyle(ChatFormatting.YELLOW), ChatType.SYSTEM, Util.NIL_UUID);
 
         // create the fake tab-list entry
         ServerLevel level = server.overworld();
@@ -408,7 +408,7 @@ public class CommonClass {
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
         ServerPlayer sample = players.get(0); // borrow client info + connection
-        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
         ServerGamePacketListenerImpl savedConn = fake.connection;
         fake.connection = sample.connection;
@@ -431,8 +431,8 @@ public class CommonClass {
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
-        Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
-        server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
+        MutableComponent leftMsg = new TranslatableComponent("multiplayer.player.left", fake.getName());
+        server.getPlayerList().broadcastMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), ChatType.SYSTEM, Util.NIL_UUID);
 
         ClientboundPlayerInfoPacket removeInfo = new ClientboundPlayerInfoPacket(ClientboundPlayerInfoPacket.Action.REMOVE_PLAYER, fake);
         server.getPlayerList().broadcastAll(removeInfo);
@@ -449,7 +449,7 @@ public class CommonClass {
         String[] skin = getSkin(name);
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
 
-        ServerPlayer fake = new ServerPlayer(server, level, profile, null);
+        ServerPlayer fake = new ServerPlayer(server, level, profile);
 
         // hide nametag
         if (hideNameTag) {
@@ -612,7 +612,7 @@ public class CommonClass {
         MinecraftServer server = target.server;
         ServerLevel level = target.getLevel();
 
-        StructureTemplateManager manager = server.getStructureManager();
+        StructureManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
@@ -634,7 +634,7 @@ public class CommonClass {
     public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
         MinecraftServer server = target.server;
         ServerLevel level = target.getLevel();
-        StructureTemplateManager manager = server.getStructureManager();
+        StructureManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(new ResourceLocation(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
@@ -688,10 +688,10 @@ public class CommonClass {
         level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
             String[] lines = random_signs_texts.get(random.nextInt(random_signs_texts.size())).split("\\r?\\n");
-            sign.setMessage(0, Component.literal(lines[0]));
-            sign.setMessage(1, Component.literal(lines[1]));
-            sign.setMessage(2, Component.literal(lines[2]));
-            sign.setMessage(3, Component.literal(lines[3]));
+            sign.setMessage(0, new TextComponent(lines[0]));
+            sign.setMessage(1, new TextComponent(lines[1]));
+            sign.setMessage(2, new TextComponent(lines[2]));
+            sign.setMessage(3, new TextComponent(lines[3]));
 
             sign.setChanged();
             level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);

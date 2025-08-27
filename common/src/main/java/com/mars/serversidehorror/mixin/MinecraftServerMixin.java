@@ -3,18 +3,17 @@ package com.mars.serversidehorror.mixin;
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.ChatMessageContent;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -30,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.BooleanSupplier;
 
 import static com.mars.serversidehorror.CommonClass.*;
@@ -40,7 +40,7 @@ import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
 public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements CommandSource, AutoCloseable{
     @Shadow public abstract PlayerList getPlayerList();
     @Shadow private int tickCount;
-    @Shadow @Final private RandomSource random;
+    @Shadow @Final private Random random;
     @Unique private static int last_torch_breaking = 0;
     @Unique private static int last_torch_replaced = 0;
     @Unique private static int last_fake_block_broken = 0;
@@ -90,9 +90,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             int ticksLeft = (int)entry.getValue()[1] - 1;
             String msg = (String)entry.getValue()[0];
             if (ticksLeft <= 0) {
-//                DimensionDataStorage storage = (self).overworld().getDataStorage();
-//                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-                (self).getPlayerList().broadcastChatMessage(PlayerChatMessage.system(new ChatMessageContent(msg)), fake, ChatType.bind(ChatType.CHAT, fake));
+                (self).getPlayerList().broadcastMessage(new TextComponent(msg), ChatType.CHAT, fake.getUUID());
                 talkerIt.remove();
             } else {
                 entry.setValue(new Object[]{msg, ticksLeft});
@@ -214,12 +212,13 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     }
 
     // literally 1984
-    @Inject(at = @At("HEAD"), method = "logChatMessage")
-    private void logChatMessage(Component content, ChatType.Bound boundChatType, String header, CallbackInfo ci) {
-        DimensionDataStorage storage = ((MinecraftServer)(Object) this).overworld().getDataStorage();
-        SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
-        savedData.addMessage(content.getString());
-    }
+//    @Inject(at = @At("HEAD"), method = "logChatMessage")
+//    private void logChatMessage(Component content, ChatType.Bound boundChatType, String header, CallbackInfo ci) {
+//        ServerGamePacketListenerImpl
+//        DimensionDataStorage storage = ((MinecraftServer)(Object) this).overworld().getDataStorage();
+//        SavedDataHorror savedData = storage.computeIfAbsent(SavedDataHorror::load, SavedDataHorror::new, SAVED_DATA_HORROR);
+//        savedData.addMessage(content.getString());
+//    }
 
     private static boolean isLookingAt(ServerPlayer real, ServerPlayer fake) {
         Vec3 vec3 = real.getViewVector(1.0F).normalize();

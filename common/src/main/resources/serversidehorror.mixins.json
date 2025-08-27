@@ -9,6 +9,7 @@
     "LocateCommandMixin",
     "MinecraftServerMixin",
     "PlayerListMixin",
+    "ServerGamePacketListenerImplMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",
     "StructureMixin"

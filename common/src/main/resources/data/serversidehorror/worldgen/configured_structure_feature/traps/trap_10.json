@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:jigsaw",
+  "config": {
+    "start_pool": "serversidehorror:traps/trap_10",
+    "size": 2
+  },
+  "biomes": "#serversidehorror:can_spawn_traps",
+  "adapt_noise": true,
+  "spawn_overrides": {}
+}

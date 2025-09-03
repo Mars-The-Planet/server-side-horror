@@ -1,7 +1,7 @@
 package com.mars.serversidehorror;
 
-import com.google.common.collect.Lists;
 import com.mars.deimos.config.DeimosConfig;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static boolean burn_down_house_enable = false;
 
     @Entry public static int joining_on_bedrock_chance = 70;
-    @Entry public static boolean joining_on_bedrock_enable = true;
+    @Entry public static boolean joining_on_bedrock_enable = false;
 
     @Entry public static int joining_in_dungeon_chance = 140;
     @Entry public static boolean joining_in_dungeon_enable = true;
@@ -54,9 +54,9 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static int random_signs_chance = 500000;
     @Entry public static boolean random_signs_enable = true;
     @Entry public static List<String> random_signs_texts = Lists.newArrayList("GG\n \n \n ",
-            "\nBehind you\n\n",
-            "\nBAF\n\n",
-            "\n\n\nGG",
+            " \nBehind you\n \n ",
+            " \nBAF\n \n ",
+            " \n \n \nGG",
             " \n \n \n ",
             "null\n \n \n ",
             "Help!\nNull is here!\nTell everyone\nabout me!",

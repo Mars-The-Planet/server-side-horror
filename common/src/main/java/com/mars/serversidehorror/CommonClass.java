@@ -411,6 +411,7 @@ public class CommonClass{
         FAKE_JOINERS.put(fake, lifeTime);
 
         FAKE_JOINERS_TALKERS.put(fake, new Object[]{msg, random.nextInt(1, lifeTime - 1)});
+        //FAKE_JOINERS_TALKERS.put(fake, new Object[]{msg, 0});
 
         return true;
     }

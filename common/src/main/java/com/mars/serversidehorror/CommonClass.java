@@ -473,7 +473,6 @@ public class CommonClass{
         fake.setYHeadRot(yRot);
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
-        // ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> { /* no-op */ });
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);
 
@@ -483,11 +482,6 @@ public class CommonClass{
 
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(spawnPacket);
-
-//        if(!isHerobrine){
-//            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
-//            server.getPlayerList().broadcastAll(updateList);
-//        }
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {

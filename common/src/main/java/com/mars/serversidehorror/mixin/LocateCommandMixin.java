@@ -20,13 +20,13 @@ public class LocateCommandMixin {
     @Inject(method = "locateStructure", at = @At("HEAD"), cancellable = true)
     private static void locateStructure(CommandSourceStack source, ResourceOrTagLocationArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
         if(!old_villages_enable && structure.asPrintable().equals("serversidehorror:village_old_plains"))
-            throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
+            throw new SimpleCommandExceptionType(Component.literal("Couldn't find the structure you were looking for because it was disabled in the config")).create();
 
         if(structure.asPrintable().contains("serversidehorror:traps/trap_")){
             if(!traps_enable)
-                throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.disabled")).create();
+                throw new SimpleCommandExceptionType(Component.literal("Couldn't find the structure you were looking for because it was disabled in the config")).create();
             if(!isGracePeriodUp(source.getServer().overworld()) && grace_period_applies_to_traps)
-                throw new SimpleCommandExceptionType(Component.translatable("serversidehorror.commands.locate.structure.grace_period_not_up")).create();
+                throw new SimpleCommandExceptionType(Component.literal("Grace period is not up yet and traps can not generate")).create();
         }
     }
 }

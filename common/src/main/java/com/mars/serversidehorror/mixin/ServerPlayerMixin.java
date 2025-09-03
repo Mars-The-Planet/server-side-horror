@@ -53,7 +53,7 @@ public class ServerPlayerMixin {
                 removeLeaves(self, random.nextInt(60, 160), 50);
 
             if(random_signs_enable && chanceOneIn(random_signs_chance) && !FAKE_PLAYERS.containsKey(self))
-                placeSign(self, 100, 10);
+                placeSign(self, 30, 10);
         }
 
         if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))

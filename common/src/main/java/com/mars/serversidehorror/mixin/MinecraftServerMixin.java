@@ -76,6 +76,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             ServerPlayer fake = entry.getKey();
             int ticksLeft = entry.getValue() - 1;
             if (ticksLeft <= 0) {
+                //System.out.println("FAKE_PLAYERS");
                 removeFakePlayer(self, fake);
                 lifeTimeIt.remove();
             } else {
@@ -90,6 +91,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             ServerPlayer fake = entry.getKey();
             int ticksLeft = entry.getValue() - 1;
             if (ticksLeft <= 0) {
+                //System.out.println("FAKE_JOINERS");
                 removeFakeJoiner(self, fake);
                 joinerIt.remove();
             } else {
@@ -105,6 +107,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             int ticksLeft = (int)entry.getValue()[1] - 1;
             String msg = (String)entry.getValue()[0];
             if (ticksLeft <= 0) {
+                //System.out.println("FAKE_JOINERS_TALKERS");
 //                DimensionDataStorage storage = (self).overworld().getDataStorage();
 //                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
                 (self).getPlayerList().broadcastChatMessage(PlayerChatMessage.system(msg), fake, ChatType.bind(ChatType.CHAT, fake));
@@ -174,6 +177,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         for (ServerPlayer real : this.getPlayerList().getPlayers()) {
             for (ServerPlayer fake : FAKE_PLAYERS.keySet()) {
                 if (isLookingAt(real, fake) && FAKE_PLAYERS.get(fake) > 10) {
+                    //System.out.println("player looked at a fake player, start removal timer");
                     FAKE_PLAYERS.put(fake, 10);
                 }
             }
@@ -186,6 +190,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
+                //System.out.println("fake_joiner_enable && chanceOneIn(fake_joiner_chance)");
                 addFakeJoiner(self, playerNames.get(random.nextInt(playerNames.size())), true);
             }
         }
@@ -195,6 +200,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             String[] name_msg = random_fake_joiner_list.get(random.nextInt(random_fake_joiner_list.size())).split(";");
+            //System.out.println("random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)");
             addFakeJoiner(self, name_msg[0], name_msg[random.nextInt(1, name_msg.length)]);
         }
 
@@ -202,12 +208,12 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if (this.tickCount % 100 != 0) return;
 //        DimensionDataStorage storage = self.overworld().getDataStorage();
 //        SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-//        System.out.println(savedData.getPlayerMessages().size());
+//        //System.out.println(savedData.getPlayerMessages().size());
         //addFakeJoiner(self, "Projekt_M", "BAF");
 //        this.getPlayerList().getPlayers().forEach(target -> joinInDungeon(target));
-//        System.out.println("TED");
+//        //System.out.println("TED");
 //        this.getPlayerList().getPlayers().forEach(target -> placeSmallTrap(target));
-//        System.out.println("TED");
+//        //System.out.println("TED");
 //        this.getPlayerList().getPlayers().forEach(target -> fakeSteps(target));
 //        this.getPlayerList().getPlayers().forEach(target -> fakeMining(target));
 //        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
@@ -231,8 +237,11 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     // literally 1984
     @Inject(at = @At("HEAD"), method = "logChatMessage")
     private void logChatMessage(Component content, ChatType.Bound boundChatType, String header, CallbackInfo ci) {
-        SavedDataHorror savedData = SavedDataHorror.get((MinecraftServer)(Object) this);
-        savedData.addMessage(content.getString());
+        try{
+            SavedDataHorror savedData = SavedDataHorror.get((MinecraftServer)(Object) this);
+            savedData.addMessage(content.getString());
+        }
+        catch (Exception ignored){}
     }
 
     private static boolean isLookingAt(ServerPlayer real, ServerPlayer fake) {

@@ -28,7 +28,7 @@ public class SavedDataHorror extends SavedData {
 
     public SavedDataHorror(boolean long_night, List<String> player_messages) {
         this.long_night = long_night;
-        this.player_messages = player_messages;
+        this.player_messages = new ArrayList<>(player_messages);;
     }
 
     public static SavedDataHorror get(MinecraftServer server) {
@@ -46,7 +46,7 @@ public class SavedDataHorror extends SavedData {
     }
 
     public void setPlayerMessages(List<String> value) {
-        this.player_messages = value;
+        this.player_messages = new ArrayList<>(value);
         this.setDirty();
     }
 

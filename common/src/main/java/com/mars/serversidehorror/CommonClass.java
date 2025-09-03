@@ -344,6 +344,7 @@ public class CommonClass{
     }
 
     public static boolean addFakeJoiner(MinecraftServer server, String name, boolean canBeTalker){
+        //System.out.println("addFakeJoiner(boolean canBeTalker)");
         if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
         if(playerList.isEmpty()) return false;
@@ -377,6 +378,7 @@ public class CommonClass{
     }
 
     public static boolean addFakeJoiner(MinecraftServer server, String name, String msg){
+        //System.out.println("addFakeJoiner(String msg)");
         if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
         if(playerList.isEmpty()) return false;
@@ -406,6 +408,7 @@ public class CommonClass{
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
+        //System.out.println("removeFakeJoiner");
         Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
         server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
@@ -414,6 +417,7 @@ public class CommonClass{
     }
 
     public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean hideNameTag) {
+        //System.out.println("spawnFakePlayer");
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
@@ -481,6 +485,7 @@ public class CommonClass{
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
+        //System.out.println("removeFakePlayer");
         ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
         ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
         fake.remove(Entity.RemovalReason.DISCARDED);
@@ -489,6 +494,7 @@ public class CommonClass{
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
+        //System.out.println("breakTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -501,6 +507,7 @@ public class CommonClass{
     }
 
     public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
+        //System.out.println("replaceTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -513,6 +520,7 @@ public class CommonClass{
     }
 
     public static boolean hitPlayerLightning(ServerPlayer target) {
+        //System.out.println("hitPlayerLightning");
         ServerLevel level = target.level();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
@@ -523,6 +531,7 @@ public class CommonClass{
     }
 
     public static void fakeMining(ServerPlayer target) {
+        //System.out.println("fakeMining");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -554,6 +563,7 @@ public class CommonClass{
     }
 
     public static void fakeSteps(ServerPlayer target) {
+        //System.out.println("fakeSteps");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -589,6 +599,7 @@ public class CommonClass{
     }
 
     public static void placeSmallTrap(ServerPlayer target) {
+        //System.out.println("placeSmallTrap");
         MinecraftServer server = target.getServer();
         ServerLevel level = target.level();
 
@@ -603,6 +614,7 @@ public class CommonClass{
     }
 
     public static void startFire(ServerPlayer target, int radius) {
+        //System.out.println("startFire");
         ServerLevel level = target.level();
         Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
         if(targetPos.isEmpty()) return;
@@ -628,6 +640,7 @@ public class CommonClass{
     }
 
     public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
+        //System.out.println("removeLeaves");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
@@ -667,7 +680,9 @@ public class CommonClass{
         BlockPos finalPos = candidates.get(random.nextInt(candidates.size()));
         level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
-            String[] lines = random_signs_texts.get(random.nextInt(random_signs_texts.size())).split("\\r?\\n");
+            String randomSignText = random_signs_texts.get(random.nextInt(random_signs_texts.size()));
+            //System.out.println("placeSign " + randomSignText);
+            String[] lines = randomSignText.split("\\r?\\n");
             SignText text = sign.getText(true)
                     .setMessage(0, Component.literal(lines[0]))
                     .setMessage(1, Component.literal(lines[1]))

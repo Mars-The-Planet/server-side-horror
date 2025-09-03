@@ -231,8 +231,11 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     // literally 1984
     @Inject(at = @At("HEAD"), method = "logChatMessage")
     private void logChatMessage(Component content, ChatType.Bound boundChatType, String header, CallbackInfo ci) {
-        SavedDataHorror savedData = SavedDataHorror.get((MinecraftServer)(Object) this);
-        savedData.addMessage(content.getString());
+        try{
+            SavedDataHorror savedData = SavedDataHorror.get((MinecraftServer)(Object) this);
+            savedData.addMessage(content.getString());
+        }
+        catch (Exception ignored){}
     }
 
     private static boolean isLookingAt(ServerPlayer real, ServerPlayer fake) {

@@ -3,8 +3,10 @@ package com.mars.serversidehorror;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mars.deimos.config.DeimosConfig;
+import com.mars.serversidehorror.mixin.PlayerAccessor;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -17,15 +19,13 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundEvents;
@@ -36,11 +36,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -281,6 +281,28 @@ public class CommonClass {
                                                 })))));
 
         dispatcher.register(
+                literal("placeHead")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players())
+                                .then(Commands.argument("name", StringArgumentType.word())
+                                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                                        .executes(ctx -> {
+                                                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                            String name = StringArgumentType.getString(ctx, "name");
+                                                            int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                            int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                            for(ServerPlayer target : targets){
+                                                                boolean canPlace = placeHead(target, name, maxRadius, minRadius);
+                                                                if(canPlace)
+                                                                    ctx.getSource().sendSuccess(() -> Component.literal("Head was placed near player " + target.getName().getString()), true);
+                                                                else
+                                                                    ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place head near player " + target.getName().getString()), true);
+                                                            }
+                                                            return 1;
+                                                        }))))));
+
+        dispatcher.register(
                 literal("resetMassages")
                         .requires(src -> src.hasPermission(2))
                         .executes(ctx -> {
@@ -458,8 +480,8 @@ public class CommonClass {
         // skin
         String[] skin = getSkin(name);
         profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
-
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
+        fake.getEntityData().set(PlayerAccessor.getDataPlayerModeCustomisation(), (byte)255);
 
         // hide nametag
         if (hideNameTag) {
@@ -514,6 +536,11 @@ public class CommonClass {
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(addEntity);
         server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), fake.getEntityData().packDirty()));
+
+        List<SynchedEntityData.DataValue<?>> values = fake.getEntityData().getNonDefaultValues();
+        if (values != null && !values.isEmpty()) {
+            server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values));
+        }
 
         FAKE_PLAYERS.put(fake, 24000);
     }
@@ -715,6 +742,38 @@ public class CommonClass {
             sign.setText(text, true);
             sign.setChanged();
             level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);
+        }
+
+        return true;
+    }
+
+    public static boolean placeHead(ServerPlayer target, String name, int maxRadius, int minRadius) {
+        ServerLevel level = target.serverLevel();
+        BlockPos playerPos = target.getOnPos();
+
+        BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
+        BlockPos bMax = playerPos.offset(maxRadius, maxRadius, maxRadius);
+        Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
+        List<BlockPos> candidates = new ArrayList<>();
+
+        for (BlockPos pos : allBlocksInRadius) {
+            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if (canSeeBlock(target, pos)) continue;
+            if (!level.isEmptyBlock(pos)) continue;
+            if (!level.getFluidState(pos).isEmpty()) continue;
+            if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            candidates.add(new BlockPos(pos));
+        }
+
+        if(candidates.isEmpty()) return false;
+
+        BlockPos finalPos = candidates.get(random.nextInt(candidates.size()));
+        level.setBlockAndUpdate(finalPos, Blocks.PLAYER_HEAD.defaultBlockState().setValue(SkullBlock.ROTATION, random.nextInt(16)));
+
+        if (level.getBlockEntity(finalPos) instanceof SkullBlockEntity head) {
+            GameProfile profile = new GameProfile(UUID.randomUUID(), name);
+            head.setOwner(profile);
+            head.setChanged();
         }
 
         return true;

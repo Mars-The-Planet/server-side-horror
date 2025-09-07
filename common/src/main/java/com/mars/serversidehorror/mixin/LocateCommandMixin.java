@@ -17,7 +17,7 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(LocateCommand.class)
 public class LocateCommandMixin {
-    @Inject(method = "locateStructure", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "locateStructure", at = @At("HEAD"))
     private static void locateStructure(CommandSourceStack source, ResourceOrTagKeyArgument.Result<Structure> structure, CallbackInfoReturnable<Integer> cir) throws CommandSyntaxException {
         if(!old_villages_enable && structure.asPrintable().equals("serversidehorror:village_old_plains"))
             throw new SimpleCommandExceptionType(Component.translatableWithFallback("serversidehorror.commands.locate.structure.disabled", "Couldn't find the structure you were looking for because it was disabled in the config")).create();

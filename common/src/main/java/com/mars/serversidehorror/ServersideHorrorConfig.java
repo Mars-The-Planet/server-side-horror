@@ -49,7 +49,7 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static boolean joining_in_dungeon_enable = true;
 
     @Entry public static int removing_leaves_chance = 2000000;
-    @Entry public static boolean removing_leaves_enable = true;
+    @Entry public static boolean removing_leaves_enable = false;
 
     @Entry public static int random_signs_chance = 500000;
     @Entry public static boolean random_signs_enable = true;
@@ -81,11 +81,19 @@ public class ServersideHorrorConfig extends DeimosConfig {
 
     @Entry public static int random_fake_joiner_chance = 720000;
     @Entry public static boolean random_fake_joiner_enable = true;
-    @Entry public static List<String> random_fake_joiner_list = Lists.newArrayList("Projekt_M;BAF;wusup;Huh, wrong server;Hello?;I want to play with you;Want to be friends?");
+    @Entry public static List<String> random_fake_joiner_list = Lists.newArrayList("Projekt_M;BAF;wusup;Huh, wrong server;Hello?;I want to play with you;Want to be friends?",
+            "IceBreak;Make a wish;No eyes always watches");
 
     @Entry public static int starer_chance = 420000;
     @Entry public static boolean starer_enable = true;
     @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
+
+    @Entry public static int heads_from_list_chance = 800000;
+    @Entry public static boolean heads_from_list_enable = true;
+    @Entry public static List<String> heads_from_list_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
+
+    @Entry public static int random_heads_chance = 800000;
+    @Entry public static boolean random_heads_enable = true;
 
     @Entry public static boolean old_villages_enable = true;
     @Entry public static boolean traps_enable = true;

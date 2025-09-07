@@ -54,9 +54,16 @@
   "serversidehorror.deimosconfig.random_fake_joiner_enable": "Enable joining of fake players",
   "serversidehorror.deimosconfig.random_fake_joiner_list": "List of fake players and their msgs",
 
-  "serversidehorror.deimosconfig.starer_chance": "Chance for a fake player to join per tick",
-  "serversidehorror.deimosconfig.starer_enable": "Enable joining of fake players",
+  "serversidehorror.deimosconfig.starer_chance": "Chance for a fake player to spawn pet tick",
+  "serversidehorror.deimosconfig.starer_enable": "Enable spawning of fake players",
   "serversidehorror.deimosconfig.starer_list": "List of fake players and their msgs",
+
+  "serversidehorror.deimosconfig.heads_from_list_chance": "Chance for a head from list to generate near player",
+  "serversidehorror.deimosconfig.heads_from_list_enable": "Enable spawning of heads from list",
+  "serversidehorror.deimosconfig.heads_from_list_list": "List of player heads",
+
+  "serversidehorror.deimosconfig.random_heads_chance": "Chance for a head of a random player to generate",
+  "serversidehorror.deimosconfig.random_heads_enable": "Enable players generating heads of random players",
 
   "serversidehorror.deimosconfig.old_villages_enable": "Allow old villages to appear in your world",
   "serversidehorror.deimosconfig.traps_enable": "Allow traps to appear in your world",

@@ -3,11 +3,9 @@ package com.mars.serversidehorror.mixin;
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInfo;
 import net.minecraft.server.TickTask;
@@ -19,18 +17,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,18 +30,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import static com.mars.serversidehorror.CommonClass.*;
-import static com.mars.serversidehorror.Constants.MOD_ID;
-import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
 import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<TickTask> implements ServerInfo, ChunkIOErrorReporter, CommandSource, AutoCloseable{
     @Shadow public abstract PlayerList getPlayerList();
-    @Shadow private int tickCount;
     @Shadow @Final private RandomSource random;
     @Unique private static int last_torch_breaking = 0;
     @Unique private static int last_torch_replaced = 0;
@@ -203,35 +186,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             //System.out.println("random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)");
             addFakeJoiner(self, name_msg[0], name_msg[random.nextInt(1, name_msg.length)]);
         }
-
-        // TESTING
-        if (this.tickCount % 100 != 0) return;
-//        DimensionDataStorage storage = self.overworld().getDataStorage();
-//        SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-//        //System.out.println(savedData.getPlayerMessages().size());
-        //addFakeJoiner(self, "Projekt_M", "BAF");
-//        this.getPlayerList().getPlayers().forEach(target -> joinInDungeon(target));
-//        //System.out.println("TED");
-//        this.getPlayerList().getPlayers().forEach(target -> placeSmallTrap(target));
-//        //System.out.println("TED");
-//        this.getPlayerList().getPlayers().forEach(target -> fakeSteps(target));
-//        this.getPlayerList().getPlayers().forEach(target -> fakeMining(target));
-//        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
-
-//        this.getPlayerList().getPlayers().forEach(target -> TO_BE_JUMP_SCARED.add(target));
-
-//        List<String> playerNames = getSeenPlayers((MinecraftServer)(Object) this);
-//        playerNames.removeAll(List.of(((MinecraftServer)(Object) this).getPlayerList().getPlayerNamesArray()));
-//        if(!playerNames.isEmpty()) {
-//            addFakeJoiner((MinecraftServer)(Object) this, playerNames.get(random.nextInt(playerNames.size())));
-//        }
-
-//        if(fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
-//            for (ServerPlayer player : this.getPlayerList().getPlayers()) {
-//                if(FAKE_PLAYERS.containsKey(player))  return;
-//                spawnFakePlayer(player, "MarsThePlanet_", 20, true);
-//            }
-//        }
     }
 
     // literally 1984

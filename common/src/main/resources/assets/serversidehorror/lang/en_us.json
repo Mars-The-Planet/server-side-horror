@@ -54,8 +54,8 @@
   "serversidehorror.deimosconfig.random_fake_joiner_enable": "Enable joining of fake players",
   "serversidehorror.deimosconfig.random_fake_joiner_list": "List of fake players and their msgs",
 
-  "serversidehorror.deimosconfig.starer_chance": "Chance for a fake player to join per tick",
-  "serversidehorror.deimosconfig.starer_enable": "Enable joining of fake players",
+  "serversidehorror.deimosconfig.starer_chance": "Chance for a fake player to spawn pet tick",
+  "serversidehorror.deimosconfig.starer_enable": "Enable spawning of fake players",
   "serversidehorror.deimosconfig.starer_list": "List of fake players and their msgs",
 
   "serversidehorror.deimosconfig.old_villages_enable": "Allow old villages to appear in your world",

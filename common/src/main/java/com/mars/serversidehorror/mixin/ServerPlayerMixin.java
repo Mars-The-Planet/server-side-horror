@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
+
 import static com.mars.serversidehorror.CommonClass.*;
 import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
@@ -50,10 +52,18 @@ public class ServerPlayerMixin {
                 placeSmallTrap(self);
 
             if(removing_leaves_enable && chanceOneIn(removing_leaves_chance) && !FAKE_PLAYERS.containsKey(self))
-                removeLeaves(self, random.nextInt(60, 160), 50);
+                removeLeaves(self, 100, 30);
 
             if(random_signs_enable && chanceOneIn(random_signs_chance) && !FAKE_PLAYERS.containsKey(self))
                 placeSign(self, 30, 10);
+
+            if(heads_from_list_enable && chanceOneIn(heads_from_list_chance) && !FAKE_PLAYERS.containsKey(self))
+                placeHead(self, heads_from_list_list.get(random.nextInt(heads_from_list_list.size() - 1)), 30, 10);
+
+            if(random_heads_enable && chanceOneIn(random_heads_chance) && !FAKE_PLAYERS.containsKey(self)) {
+                List<String> playerNames = getSeenPlayers(self.getServer());
+                placeHead(self, playerNames.get(random.nextInt(playerNames.size() - 1)), 30, 10);
+            }
         }
 
         if(TO_BE_HIT_BY_LIGHTNING.contains(self) && hitPlayerLightning(self))

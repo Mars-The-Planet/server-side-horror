@@ -8,7 +8,6 @@
     "FurnaceBlockEntityMixin",
     "LocateCommandMixin",
     "MinecraftServerMixin",
-    "PlayerAccessor",
     "PlayerListMixin",
     "ServerLevelMixin",
     "ServerPlayerMixin",

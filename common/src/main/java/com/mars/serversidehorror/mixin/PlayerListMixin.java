@@ -1,5 +1,6 @@
 package com.mars.serversidehorror.mixin;
 
+import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +22,16 @@ public abstract class PlayerListMixin {
     private void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
         PlayerList self = (PlayerList)(Object)this;
         MinecraftServer server = self.getServer();
+
+        SavedDataHorror savedData = SavedDataHorror.get(server);
+        String playerName = player.getPlainTextName();
+        savedData.addSeenPlayer(playerName);
+        System.out.println("CAU");
+
+        for (int i = 0; i < savedData.getSeenPlayers().size(); i++) {
+            System.out.println(savedData.getSeenPlayers().get(i));
+        }
+
         if(!isGracePeriodUp(server.overworld()))
             return;
 
@@ -29,9 +40,8 @@ public abstract class PlayerListMixin {
 
         ServerGamePacketListenerImpl listener = (ServerGamePacketListenerImpl)connection.getPacketListener();
 
-        if(joining_on_bedrock_enable && chanceOneIn(joining_on_bedrock_chance) && !FAKE_PLAYERS.containsKey(player)) {
+        if(joining_on_bedrock_enable && chanceOneIn(joining_on_bedrock_chance) && !FAKE_PLAYERS.containsKey(player))
             joinOnBedrock(player, listener);
-        }
 
         if(joining_in_dungeon_enable && chanceOneIn(joining_in_dungeon_chance) && !FAKE_PLAYERS.containsKey(player))
             joinInDungeon(player, listener);

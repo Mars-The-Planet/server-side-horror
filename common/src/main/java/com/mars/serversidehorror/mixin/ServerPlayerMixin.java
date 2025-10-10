@@ -1,5 +1,7 @@
 package com.mars.serversidehorror.mixin;
 
+import com.mars.serversidehorror.SavedDataHorror;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -61,7 +63,8 @@ public class ServerPlayerMixin {
                 placeHead(self, heads_from_list_list.get(random.nextInt(heads_from_list_list.size() - 1)), 30, 10);
 
             if(random_heads_enable && chanceOneIn(random_heads_chance) && !FAKE_PLAYERS.containsKey(self)) {
-                List<String> playerNames = getSeenPlayers(self.getServer());
+                SavedDataHorror savedData = SavedDataHorror.get(self.level().getServer());
+                List<String> playerNames = savedData.getSeenPlayers();
                 placeHead(self, playerNames.get(random.nextInt(playerNames.size() - 1)), 30, 10);
             }
         }

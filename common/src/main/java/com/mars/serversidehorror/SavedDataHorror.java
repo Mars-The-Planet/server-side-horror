@@ -14,21 +14,24 @@ import java.util.List;
 public class SavedDataHorror extends SavedData {
     private List<String> player_messages;
     private boolean long_night;
+    private List<String> seen_players;
     public static final Codec<SavedDataHorror> CODEC = RecordCodecBuilder.create(
             builder -> builder.group(
                     Codec.BOOL.fieldOf("long_night").forGetter(SavedDataHorror::getLongNight),
-                    Codec.STRING.listOf().fieldOf("player_messages").forGetter(SavedDataHorror::getPlayerMessages)
+                    Codec.STRING.listOf().fieldOf("player_messages").forGetter(SavedDataHorror::getPlayerMessages),
+                    Codec.STRING.listOf().fieldOf("seen_players").forGetter(SavedDataHorror::getSeenPlayers)
             ).apply(builder, SavedDataHorror::new)
     );
     public static final SavedDataType<SavedDataHorror> TYPE = new SavedDataType<>("saved_data_horror", SavedDataHorror::new, CODEC, null );
 
     public SavedDataHorror() {
-        this(false, new ArrayList<>());
+        this(false, new ArrayList<>(), new ArrayList<>());
     }
 
-    public SavedDataHorror(boolean long_night, List<String> player_messages) {
+    public SavedDataHorror(boolean long_night, List<String> player_messages, List<String> seen_players) {
         this.long_night = long_night;
-        this.player_messages = new ArrayList<>(player_messages);;
+        this.player_messages = new ArrayList<>(player_messages);
+        this.seen_players = new ArrayList<>(seen_players);
     }
 
     public static SavedDataHorror get(MinecraftServer server) {
@@ -50,6 +53,10 @@ public class SavedDataHorror extends SavedData {
         this.setDirty();
     }
 
+    public List<String> getPlayerMessages() {
+        return player_messages;
+    }
+
     public boolean getLongNight() {
         return long_night;
     }
@@ -59,7 +66,19 @@ public class SavedDataHorror extends SavedData {
         this.setDirty();
     }
 
-    public List<String> getPlayerMessages() {
-        return player_messages;
+    public void addSeenPlayer(String name){
+        if(!seen_players.contains(name)){
+            seen_players.add(name);
+            this.setDirty();
+        }
+    }
+
+    public void setSeenPlayers(List<String> value) {
+        this.seen_players = new ArrayList<>(value);
+        this.setDirty();
+    }
+
+    public List<String> getSeenPlayers() {
+        return seen_players;
     }
 }

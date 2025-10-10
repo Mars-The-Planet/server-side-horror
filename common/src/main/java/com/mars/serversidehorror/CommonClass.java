@@ -1,10 +1,12 @@
 package com.mars.serversidehorror;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mars.deimos.config.DeimosConfig;
-import com.mars.serversidehorror.mixin.PlayerAccessor;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.brigadier.CommandDispatcher;
@@ -18,9 +20,14 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -31,19 +38,25 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.datafix.fixes.PlayerHeadBlockProfileFix;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PlayerHeadItem;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -62,13 +75,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -375,12 +393,9 @@ public class CommonClass{
 
         Component joinMsg = Component.translatable("multiplayer.player.joined", name);
         server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
-
-        ServerLevel level = server.overworld();
-        GameProfile profile = new GameProfile(UUID.randomUUID(), name);
         String[] skin = getSkin(name);
-        profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
-        ServerPlayer fake = new ServerPlayer(server, level, profile, playerList.getFirst().clientInformation());
+        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
+        ServerPlayer fake = new ServerPlayer(server, server.overworld(), profile, playerList.getFirst().clientInformation());
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
         ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
@@ -393,8 +408,8 @@ public class CommonClass{
         FAKE_JOINERS.put(fake, lifeTime);
 
         // is talker?
-        if(canBeTalker && random.nextBoolean()) {
-            SavedDataHorror savedData = SavedDataHorror.get(server);
+        SavedDataHorror savedData = SavedDataHorror.get(server);
+        if(canBeTalker && random.nextBoolean() && !savedData.getPlayerMessages().isEmpty()) {
             FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(random.nextInt(savedData.getPlayerMessages().size() - 1)), random.nextInt(1, lifeTime - 1)});
         }
 
@@ -402,7 +417,6 @@ public class CommonClass{
     }
 
     public static boolean addFakeJoiner(MinecraftServer server, String name, String msg){
-        //System.out.println("addFakeJoiner(String msg)");
         if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
         if(playerList.isEmpty()) return false;
@@ -410,11 +424,9 @@ public class CommonClass{
         Component joinMsg = Component.translatable("multiplayer.player.joined", name);
         server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
-        ServerLevel level = server.overworld();
-        GameProfile profile = new GameProfile(UUID.randomUUID(), name);
         String[] skin = getSkin(name);
-        profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
-        ServerPlayer fake = new ServerPlayer(server, level, profile, playerList.getFirst().clientInformation());
+        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
+        ServerPlayer fake = new ServerPlayer(server, server.overworld(), profile, server.getPlayerList().getPlayers().getFirst().clientInformation());
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
         ClientboundPlayerInfoUpdatePacket addInfo = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, fake);
@@ -432,7 +444,6 @@ public class CommonClass{
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
-        //System.out.println("removeFakeJoiner");
         Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
         server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
@@ -442,17 +453,17 @@ public class CommonClass{
 
     public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean hideNameTag) {
         //System.out.println("spawnFakePlayer");
-        MinecraftServer server = target.getServer();
+        MinecraftServer server = target.level().getServer();
         if (server == null) return;
 
         ServerLevel level = target.level();
-        GameProfile profile = new GameProfile(UUID.randomUUID(), name);
+        //GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 
         // create fake player
         String[] skin = getSkin(name);
-        profile.getProperties().put("textures", new Property("textures", skin[0], skin[1]));
+        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
-        fake.getEntityData().set(PlayerAccessor.getDataPlayerModeCustomisation(), (byte)255);
+        //fake.getEntityData().set(PlayerAccessor.getDataPlayerModeCustomisation(), (byte)255);
 
         // remove nametag
         if(hideNameTag){
@@ -492,7 +503,8 @@ public class CommonClass{
         fake.setYHeadRot(yRot);
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
-        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> {}, (packet, list) -> {});
+        // ServerEntity wrapper = new ServerEntity(level, fake, 0, false, packet -> {}, (packet, list) -> {});
+        ServerEntity wrapper = getServerEntity(target, level, fake);
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);
 
@@ -507,15 +519,60 @@ public class CommonClass{
         if (values != null && !values.isEmpty()) {
             server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values));
         }
+    }
 
-//        if(!isHerobrine){
-//            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
-//            server.getPlayerList().broadcastAll(updateList);
-//        }
+    private static @NotNull ServerEntity getServerEntity(ServerPlayer target, ServerLevel level, ServerPlayer fake) {
+        ServerGamePacketListenerImpl conn = target.connection;
+        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, new ServerEntity.Synchronizer() {
+            @Override
+            public void sendToTrackingPlayers(Packet<? super ClientGamePacketListener> packet) {
+                conn.send(packet);
+            }
+
+            @Override
+            public void sendToTrackingPlayersAndSelf(Packet<? super ClientGamePacketListener> packet) {
+                sendToTrackingPlayers(packet);
+            }
+
+            @Override
+            public void sendToTrackingPlayersFiltered(Packet<? super ClientGamePacketListener> packet, Predicate<ServerPlayer> predicate) {
+                if (predicate.test(conn.getPlayer())) {
+                    sendToTrackingPlayers(packet);
+                }
+            }
+        });
+        return wrapper;
+    }
+
+    static GameProfile makeProfileWithSkin(String name, String valueB64, String signature) {
+        UUID id = UUID.randomUUID();
+
+        // Build a PropertyMap up-front (profile.properties() is immutable in 1.21.9)
+        Multimap<String, Property> mm = ArrayListMultimap.create();
+        mm.put("textures", new Property("textures", valueB64, signature));
+        PropertyMap props = new PropertyMap(mm);
+
+        // Prefer the 3-arg ctor if present; otherwise reflectively set the field
+        try {
+            Constructor<GameProfile> c = GameProfile.class
+                    .getDeclaredConstructor(UUID.class, String.class, PropertyMap.class);
+            return c.newInstance(id, name, props);
+        } catch (NoSuchMethodException e) {
+            try {
+                GameProfile gp = new GameProfile(id, name);
+                Field f = GameProfile.class.getDeclaredField("properties");
+                f.setAccessible(true);                 // JPMS allows this for the app loader here
+                f.set(gp, props);
+                return gp;
+            } catch (ReflectiveOperationException ex) {
+                throw new RuntimeException("Failed to apply skin to GameProfile", ex);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to construct GameProfile", e);
+        }
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
-        //System.out.println("removeFakePlayer");
         ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
         ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
         fake.remove(Entity.RemovalReason.DISCARDED);
@@ -524,7 +581,6 @@ public class CommonClass{
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
-        //System.out.println("breakTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -537,7 +593,6 @@ public class CommonClass{
     }
 
     public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
-        //System.out.println("replaceTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -550,7 +605,6 @@ public class CommonClass{
     }
 
     public static boolean hitPlayerLightning(ServerPlayer target) {
-        //System.out.println("hitPlayerLightning");
         ServerLevel level = target.level();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
@@ -561,7 +615,6 @@ public class CommonClass{
     }
 
     public static void fakeMining(ServerPlayer target) {
-        //System.out.println("fakeMining");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -593,7 +646,6 @@ public class CommonClass{
     }
 
     public static void fakeSteps(ServerPlayer target) {
-        //System.out.println("fakeSteps");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -620,7 +672,7 @@ public class CommonClass{
     }
 
     public static void joinOnBedrock(ServerPlayer target, ServerGamePacketListenerImpl listener) {
-        MinecraftServer server = target.getServer();
+        MinecraftServer server = target.level().getServer();
         BlockPos playerPos = new BlockPos((int)target.getX(), 319, (int)target.getZ());
 
 
@@ -629,8 +681,7 @@ public class CommonClass{
     }
 
     public static void placeSmallTrap(ServerPlayer target) {
-        //System.out.println("placeSmallTrap");
-        MinecraftServer server = target.getServer();
+        MinecraftServer server = target.level().getServer();
         ServerLevel level = target.level();
 
         StructureTemplateManager manager = server.getStructureManager();
@@ -644,7 +695,6 @@ public class CommonClass{
     }
 
     public static void startFire(ServerPlayer target, int radius) {
-        //System.out.println("startFire");
         ServerLevel level = target.level();
         Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
         if(targetPos.isEmpty()) return;
@@ -654,7 +704,7 @@ public class CommonClass{
     }
 
     public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
-        MinecraftServer server = target.getServer();
+        MinecraftServer server = target.level().getServer();
         ServerLevel level = target.level();
         StructureTemplateManager manager = server.getStructureManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
@@ -670,7 +720,6 @@ public class CommonClass{
     }
 
     public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
-        //System.out.println("removeLeaves");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
@@ -751,9 +800,16 @@ public class CommonClass{
         level.setBlockAndUpdate(finalPos, Blocks.PLAYER_HEAD.defaultBlockState().setValue(SkullBlock.ROTATION, random.nextInt(16)));
 
         if (level.getBlockEntity(finalPos) instanceof SkullBlockEntity head) {
-            ResolvableProfile profile = new ResolvableProfile(Optional.of(name), Optional.empty(), new PropertyMap());
-            head.setOwner(profile);
+            String[] skin = getSkin(name);
+            GameProfile gameProfile = makeProfileWithSkin(name, skin[0], skin[1]);
+            ResolvableProfile profile = ResolvableProfile.createResolved(gameProfile);
+
+            ItemStack stack = new ItemStack(Items.PLAYER_HEAD);
+            stack.set(DataComponents.PROFILE, profile);
+
+            head.applyComponentsFromItemStack(stack);
             head.setChanged();
+            level.setBlockEntity(head);
         }
 
         return true;
@@ -780,39 +836,6 @@ public class CommonClass{
             return false;
         }
         return ((BlockHitResult) result).getBlockPos().equals(pos);
-    }
-
-    public static List<String> getSeenPlayers(MinecraftServer server) {
-        Path worldPath = server.getWorldPath(LevelResource.ROOT);
-        List<String> names = new ArrayList<>();
-
-        Path playerData = worldPath.resolve("playerdata");
-        if (!Files.isDirectory(playerData)) return names;
-
-        GameProfileCache cache = server.getProfileCache();
-        Set<UUID> uuids = new HashSet<>();
-
-        try (Stream<Path> paths = Files.list(playerData)) {
-            uuids =  paths
-                    .filter(p -> p.getFileName().toString().endsWith(".dat"))
-                    .map(p -> p.getFileName().toString().replace(".dat", ""))
-                    .map(uuidStr -> {
-                        try { return UUID.fromString(uuidStr); }
-                        catch (IllegalArgumentException e) { return null; }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toUnmodifiableSet());
-        }
-        catch (IOException e){
-            Constants.LOG.info(e.toString());
-        }
-
-        for(UUID uuid : uuids){
-            Optional<GameProfile> opt = cache.get(uuid);
-            if (opt.isPresent())    names.add(opt.map(GameProfile::getName).get());
-        }
-
-        return names;
     }
 
     private static String[] getSkin(String name){

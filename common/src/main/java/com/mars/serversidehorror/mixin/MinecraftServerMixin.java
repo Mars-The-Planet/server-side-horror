@@ -90,9 +90,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             int ticksLeft = (int)entry.getValue()[1] - 1;
             String msg = (String)entry.getValue()[0];
             if (ticksLeft <= 0) {
-                //System.out.println("FAKE_JOINERS_TALKERS");
-//                DimensionDataStorage storage = (self).overworld().getDataStorage();
-//                SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
                 (self).getPlayerList().broadcastChatMessage(PlayerChatMessage.system(msg), fake, ChatType.bind(ChatType.CHAT, fake));
                 talkerIt.remove();
             } else {
@@ -160,7 +157,6 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         for (ServerPlayer real : this.getPlayerList().getPlayers()) {
             for (ServerPlayer fake : FAKE_PLAYERS.keySet()) {
                 if (isLookingAt(real, fake) && FAKE_PLAYERS.get(fake) > 10) {
-                    //System.out.println("player looked at a fake player, start removal timer");
                     FAKE_PLAYERS.put(fake, 10);
                 }
             }
@@ -170,20 +166,20 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
 
         // adds a fake player to the tab with a fake join msg
         if (fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
-            List<String> playerNames = getSeenPlayers(self);
+            SavedDataHorror savedData = SavedDataHorror.get(self);
+            List<String> playerNames = savedData.getSeenPlayers();
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
-                //System.out.println("fake_joiner_enable && chanceOneIn(fake_joiner_chance)");
                 addFakeJoiner(self, playerNames.get(random.nextInt(playerNames.size())), true);
             }
         }
 
         // adds a fake player to the tab with a fake join msg from the config
         if (random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)) {
-            List<String> playerNames = getSeenPlayers(self);
+            SavedDataHorror savedData = SavedDataHorror.get(self);
+            List<String> playerNames = savedData.getSeenPlayers();
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             String[] name_msg = random_fake_joiner_list.get(random.nextInt(random_fake_joiner_list.size())).split(";");
-            //System.out.println("random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)");
             addFakeJoiner(self, name_msg[0], name_msg[random.nextInt(1, name_msg.length)]);
         }
     }

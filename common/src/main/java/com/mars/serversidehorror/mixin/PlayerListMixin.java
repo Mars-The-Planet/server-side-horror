@@ -26,11 +26,6 @@ public abstract class PlayerListMixin {
         SavedDataHorror savedData = SavedDataHorror.get(server);
         String playerName = player.getPlainTextName();
         savedData.addSeenPlayer(playerName);
-        System.out.println("CAU");
-
-        for (int i = 0; i < savedData.getSeenPlayers().size(); i++) {
-            System.out.println(savedData.getSeenPlayers().get(i));
-        }
 
         if(!isGracePeriodUp(server.overworld()))
             return;

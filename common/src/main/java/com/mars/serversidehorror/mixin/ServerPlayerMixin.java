@@ -62,6 +62,9 @@ public class ServerPlayerMixin {
             if(heads_from_list_enable && chanceOneIn(heads_from_list_chance) && !FAKE_PLAYERS.containsKey(self))
                 placeHead(self, heads_from_list_list.get(random.nextInt(heads_from_list_list.size() - 1)), 30, 10);
 
+            if(scary_sound_enable && chanceOneIn(scary_sound_chance) && !FAKE_PLAYERS.containsKey(self))
+                playScarySound(self, 16);
+
             if(random_heads_enable && chanceOneIn(random_heads_chance) && !FAKE_PLAYERS.containsKey(self)) {
                 SavedDataHorror savedData = SavedDataHorror.get(self.level().getServer());
                 List<String> playerNames = savedData.getSeenPlayers();

@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mars.deimos.config.DeimosConfig;
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.brigadier.CommandDispatcher;
@@ -20,11 +19,9 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -38,25 +35,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.datafix.fixes.PlayerHeadBlockProfileFix;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.PlayerHeadItem;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
@@ -68,7 +61,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -77,18 +69,12 @@ import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.mars.serversidehorror.Constants.MOD_ID;
 import static com.mars.serversidehorror.ServersideHorrorConfig.grace_period;
@@ -322,6 +308,24 @@ public class CommonClass{
                                                 }))))));
 
         dispatcher.register(
+                literal("playScarySound")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("targets", EntityArgument.players()).
+                                then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                                    .executes(ctx -> {
+                                        Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                        int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                        for(ServerPlayer target : targets){
+                                            boolean didPlay = playScarySound(target, radius);
+                                            if(didPlay)
+                                                ctx.getSource().sendSuccess(() -> Component.literal("Played a scary sound near the player " + target.getName().getString()), true);
+                                            else
+                                                ctx.getSource().sendSuccess(() -> Component.literal("Couldn't play a scary sound because the config scary_sound_list is empty"), true);
+                                        }
+                                        return 1;
+                                    }))));
+
+        dispatcher.register(
                 literal("resetMassages")
                         .requires(src -> src.hasPermission(2))
                                 .executes(ctx -> {
@@ -521,57 +525,6 @@ public class CommonClass{
         }
     }
 
-    private static @NotNull ServerEntity getServerEntity(ServerPlayer target, ServerLevel level, ServerPlayer fake) {
-        ServerGamePacketListenerImpl conn = target.connection;
-        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, new ServerEntity.Synchronizer() {
-            @Override
-            public void sendToTrackingPlayers(Packet<? super ClientGamePacketListener> packet) {
-                conn.send(packet);
-            }
-
-            @Override
-            public void sendToTrackingPlayersAndSelf(Packet<? super ClientGamePacketListener> packet) {
-                sendToTrackingPlayers(packet);
-            }
-
-            @Override
-            public void sendToTrackingPlayersFiltered(Packet<? super ClientGamePacketListener> packet, Predicate<ServerPlayer> predicate) {
-                if (predicate.test(conn.getPlayer())) {
-                    sendToTrackingPlayers(packet);
-                }
-            }
-        });
-        return wrapper;
-    }
-
-    static GameProfile makeProfileWithSkin(String name, String valueB64, String signature) {
-        UUID id = UUID.randomUUID();
-
-        // Build a PropertyMap up-front (profile.properties() is immutable in 1.21.9)
-        Multimap<String, Property> mm = ArrayListMultimap.create();
-        mm.put("textures", new Property("textures", valueB64, signature));
-        PropertyMap props = new PropertyMap(mm);
-
-        // Prefer the 3-arg ctor if present; otherwise reflectively set the field
-        try {
-            Constructor<GameProfile> c = GameProfile.class
-                    .getDeclaredConstructor(UUID.class, String.class, PropertyMap.class);
-            return c.newInstance(id, name, props);
-        } catch (NoSuchMethodException e) {
-            try {
-                GameProfile gp = new GameProfile(id, name);
-                Field f = GameProfile.class.getDeclaredField("properties");
-                f.setAccessible(true);                 // JPMS allows this for the app loader here
-                f.set(gp, props);
-                return gp;
-            } catch (ReflectiveOperationException ex) {
-                throw new RuntimeException("Failed to apply skin to GameProfile", ex);
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to construct GameProfile", e);
-        }
-    }
-
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
         ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
         ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
@@ -760,7 +713,6 @@ public class CommonClass{
         level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
             String randomSignText = random_signs_texts.get(random.nextInt(random_signs_texts.size()));
-            //System.out.println("placeSign " + randomSignText);
             String[] lines = randomSignText.split("\\r?\\n");
             SignText text = sign.getText(true)
                     .setMessage(0, Component.literal(lines[0]))
@@ -815,7 +767,70 @@ public class CommonClass{
         return true;
     }
 
+    public static boolean playScarySound(ServerPlayer target, int radius) {
+        ServerLevel level = target.level();
+        List<String> soundNamesList = ServersideHorrorConfig.scary_sound_list;
+        if (soundNamesList.isEmpty())
+            return false;
+        String soundName = soundNamesList.get(random.nextInt(soundNamesList.size()-1));
+        SoundEvent scarySound = BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse(soundName));
+        BlockPos soundPos = target.getOnPos().offset(random.nextInt(-radius, radius), random.nextInt(-radius, radius), random.nextInt(-radius, radius));
+        level.playSound(null, soundPos, scarySound, SoundSource.AMBIENT, 1f, 1f);
+        return true;
+    }
+
     // ------HELPER METHODS------
+    private static @NotNull ServerEntity getServerEntity(ServerPlayer target, ServerLevel level, ServerPlayer fake) {
+        ServerGamePacketListenerImpl conn = target.connection;
+        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, new ServerEntity.Synchronizer() {
+            @Override
+            public void sendToTrackingPlayers(Packet<? super ClientGamePacketListener> packet) {
+                conn.send(packet);
+            }
+
+            @Override
+            public void sendToTrackingPlayersAndSelf(Packet<? super ClientGamePacketListener> packet) {
+                sendToTrackingPlayers(packet);
+            }
+
+            @Override
+            public void sendToTrackingPlayersFiltered(Packet<? super ClientGamePacketListener> packet, Predicate<ServerPlayer> predicate) {
+                if (predicate.test(conn.getPlayer())) {
+                    sendToTrackingPlayers(packet);
+                }
+            }
+        });
+        return wrapper;
+    }
+
+    static GameProfile makeProfileWithSkin(String name, String valueB64, String signature) {
+        UUID id = UUID.randomUUID();
+
+        // Build a PropertyMap up-front (profile.properties() is immutable in 1.21.9)
+        Multimap<String, Property> mm = ArrayListMultimap.create();
+        mm.put("textures", new Property("textures", valueB64, signature));
+        PropertyMap props = new PropertyMap(mm);
+
+        // Prefer the 3-arg ctor if present; otherwise reflectively set the field
+        try {
+            Constructor<GameProfile> c = GameProfile.class
+                    .getDeclaredConstructor(UUID.class, String.class, PropertyMap.class);
+            return c.newInstance(id, name, props);
+        } catch (NoSuchMethodException e) {
+            try {
+                GameProfile gp = new GameProfile(id, name);
+                Field f = GameProfile.class.getDeclaredField("properties");
+                f.setAccessible(true);                 // JPMS allows this for the app loader here
+                f.set(gp, props);
+                return gp;
+            } catch (ReflectiveOperationException ex) {
+                throw new RuntimeException("Failed to apply skin to GameProfile", ex);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to construct GameProfile", e);
+        }
+    }
+
     public static boolean chanceOneIn(int denominator){
         return random.nextInt(denominator) == 0;
     }

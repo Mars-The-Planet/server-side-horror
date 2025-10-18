@@ -102,7 +102,6 @@ public class ServersideHorrorConfig extends DeimosConfig {
             "minecraft:entity.creeper.primed",
             "minecraft:entity.arrow.hit",
             "minecraft:item.trident.hit_ground",
-
             "minecraft:entity.polar_bear.ambient",
             "minecraft:entity.polar_bear.ambient_baby",
             "minecraft:item.crossbow.hit",

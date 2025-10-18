@@ -92,6 +92,26 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static boolean heads_from_list_enable = true;
     @Entry public static List<String> heads_from_list_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
 
+    @Entry public static int scary_sound_chance = 1000000;
+    @Entry public static boolean scary_sound_enable = true;
+    @Entry public static List<String> scary_sound_list = Lists.newArrayList(
+            "minecraft:block.bell.resonate",
+            "minecraft:block.bell.use",
+            "minecraft:entity.tnt.primed",
+            "minecraft:entity.generic.explode",
+            "minecraft:entity.creeper.primed",
+            "minecraft:entity.arrow.hit",
+            "minecraft:item.trident.hit_ground",
+            "minecraft:entity.polar_bear.ambient",
+            "minecraft:entity.polar_bear.ambient_baby",
+            "minecraft:item.crossbow.hit",
+            "minecraft:entity.polar_bear.death",
+            "minecraft:entity.polar_bear.warning",
+            "minecraft:entity.dragon_fireball.explode",
+            "minecraft:entity.splash_potion.break",
+            "minecraft:entity.ghast.scream",
+            "minecraft:entity.allay.death");
+
     @Entry public static int random_heads_chance = 800000;
     @Entry public static boolean random_heads_enable = true;
 

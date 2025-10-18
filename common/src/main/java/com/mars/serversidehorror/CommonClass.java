@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
@@ -32,6 +33,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -100,39 +102,39 @@ public class CommonClass{
                 literal("addFakeJoiner")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("fakesName", StringArgumentType.word())
-                            .executes(ctx -> {
-                                String fakesName = StringArgumentType.getString(ctx, "fakesName");
-                                addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
-                                ctx.getSource().sendSuccess(() -> Component.literal("Added a fake player " + fakesName), true);
-                                return 1;
-                            })));
+                                .executes(ctx -> {
+                                    String fakesName = StringArgumentType.getString(ctx, "fakesName");
+                                    addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Added fake player " + fakesName), true);
+                                    return 1;
+                                })));
 
         dispatcher.register(
                 literal("spawnFakePlayer")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("fakesName", StringArgumentType.word())
-                        .then(Commands.argument("radius", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("hideNametag", BoolArgumentType.bool())
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    String fakesName = StringArgumentType.getString(ctx, "fakesName");
-                                    int radius = IntegerArgumentType.getInteger(ctx, "radius");
-                                    boolean hideNametag = BoolArgumentType.getBool(ctx, "hideNametag");
-                                    targets.forEach(target -> spawnFakePlayer(target, fakesName, radius, hideNametag));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Spawned a fake player " + fakesName), true);
-                                    return 1;
-                                }))))));
+                                .then(Commands.argument("fakesName", StringArgumentType.word())
+                                        .then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("hideNametag", BoolArgumentType.bool())
+                                                        .executes(ctx -> {
+                                                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                            String fakesName = StringArgumentType.getString(ctx, "fakesName");
+                                                            int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                                            boolean hideNametag = BoolArgumentType.getBool(ctx, "hideNametag");
+                                                            targets.forEach(target -> spawnFakePlayer(target, fakesName, radius, hideNametag));
+                                                            ctx.getSource().sendSuccess(() -> Component.literal("Spawned fake player " + fakesName), true);
+                                                            return 1;
+                                                        }))))));
 
         dispatcher.register(
                 literal("spawnFakePlayer")
                         .requires(src -> src.hasPermission(2))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Spawned a Herobrine near players"), true);
-                                    return 1;
-                                }));
+                        .executes(ctx -> {
+                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                            targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
+                            ctx.getSource().sendSuccess(() -> Component.literal("Spawned Herobrine near players"), true);
+                            return 1;
+                        }));
 
         dispatcher.register(
                 literal("hitPlayerLightning")
@@ -141,7 +143,7 @@ public class CommonClass{
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_HIT_BY_LIGHTNING.addAll(targets);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Hit players with lightning"), true);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Struck players with lightning"), true);
                                     return 1;
                                 })));
 
@@ -152,52 +154,52 @@ public class CommonClass{
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     TO_BE_JUMP_SCARED.addAll(targets);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Jumped scared players"), true);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Jump-scared players"), true);
                                     return 1;
                                 })));
 
         dispatcher.register(
                 literal("setLongNight")
                         .requires(src -> src.hasPermission(2))
-                                .executes(ctx -> {
-                                    MinecraftServer server = ctx.getSource().getServer();
-                                    ServerLevel level = server.overworld();
-                                    SavedDataHorror savedData = SavedDataHorror.get(server);
-                                    savedData.setLongNight(true);
-                                    level.setDayTime(17999);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
-                                    return 1;
-                                }));
+                        .executes(ctx -> {
+                            MinecraftServer server = ctx.getSource().getServer();
+                            ServerLevel level = server.overworld();
+                            SavedDataHorror savedData = SavedDataHorror.get(server);
+                            savedData.setLongNight(true);
+                            level.setDayTime(17999);
+                            ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
+                            return 1;
+                        }));
 
         dispatcher.register(
                 literal("breakTorches")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
-                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
-                                    targets.forEach(target -> breakTorches(target, minRadius, maxRadius));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Broke torches near players"), true);
-                                    return 1;
-                                })))));
+                                .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                                .executes(ctx -> {
+                                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                    targets.forEach(target -> breakTorches(target, minRadius, maxRadius));
+                                                    ctx.getSource().sendSuccess(() -> Component.literal("Broke torches near players"), true);
+                                                    return 1;
+                                                })))));
 
         dispatcher.register(
                 literal("replaceTorches")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
-                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
-                                    targets.forEach(target -> replaceTorches(target, minRadius, maxRadius));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Replaced torches near players by redstone torches"), true);
-                                    return 1;
-                                })))));
+                                .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                                .executes(ctx -> {
+                                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                    targets.forEach(target -> replaceTorches(target, minRadius, maxRadius));
+                                                    ctx.getSource().sendSuccess(() -> Component.literal("Replaced torches near players with redstone torches"), true);
+                                                    return 1;
+                                                })))));
 
         dispatcher.register(
                 literal("fakeMining")
@@ -217,7 +219,7 @@ public class CommonClass{
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> fakeSteps(target));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake step noises"), true);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Players will hear fake footsteps"), true);
                                     return 1;
                                 })));
 
@@ -237,81 +239,99 @@ public class CommonClass{
                 literal("startRandomFire")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("radius", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    int radius = IntegerArgumentType.getInteger(ctx, "radius");
-                                    targets.forEach(target -> startFire(target, radius));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("A random fire will be started near these players"), true);
-                                    return 1;
-                                }))));
+                                .then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                                        .executes(ctx -> {
+                                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                            int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                            targets.forEach(target -> startFire(target, radius));
+                                            ctx.getSource().sendSuccess(() -> Component.literal("A random fire will be started near these players"), true);
+                                            return 1;
+                                        }))));
 
         dispatcher.register(
                 literal("removeLeaves")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
-                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
-                                    targets.forEach(target -> removeLeaves(target, maxRadius, minRadius));
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Leaves will be removed around players"), true);
-                                    return 1;
-                                })))));
+                                .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                                .executes(ctx -> {
+                                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                    targets.forEach(target -> removeLeaves(target, maxRadius, minRadius));
+                                                    ctx.getSource().sendSuccess(() -> Component.literal("Leaves will be removed around players"), true);
+                                                    return 1;
+                                                })))));
 
         dispatcher.register(
                 literal("placeSign")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
-                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
-                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
-                                .executes(ctx -> {
-                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
-                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
-                                    for(ServerPlayer target : targets){
-                                        boolean canPlace = placeSign(target, maxRadius, minRadius);
-                                        if(canPlace)
-                                            ctx.getSource().sendSuccess(() -> Component.literal("Sign was placed near player " + target.getName().getString()), true);
-                                        else
-                                            ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place sing near player " + target.getName().getString()), true);
-                                    }
-                                    return 1;
-                                })))));
+                                .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                                .executes(ctx -> {
+                                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                    for(ServerPlayer target : targets){
+                                                        boolean canPlace = placeSign(target, maxRadius, minRadius);
+                                                        if(canPlace)
+                                                            ctx.getSource().sendSuccess(() -> Component.literal("Placed a sign near player " + target.getName().getString()), true);
+                                                        else
+                                                            ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place a sign near player " + target.getName().getString()), true);
+                                                    }
+                                                    return 1;
+                                                })))));
 
         dispatcher.register(
                 literal("placeHead")
                         .requires(src -> src.hasPermission(2))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .then(Commands.argument("name", StringArgumentType.word())
-                                .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
-                                        .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
-                                                .executes(ctx -> {
-                                                    Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
-                                                    String name = StringArgumentType.getString(ctx, "name");
-                                                    int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
-                                                    int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
-                                                    for(ServerPlayer target : targets){
-                                                        boolean canPlace = placeHead(target, name, maxRadius, minRadius);
-                                                        if(canPlace)
-                                                            ctx.getSource().sendSuccess(() -> Component.literal("Head was placed near player " + target.getName().getString()), true);
-                                                        else
-                                                            ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place head near player " + target.getName().getString()), true);
-                                                    }
-                                                    return 1;
-                                                }))))));
+                                        .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
+                                                .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
+                                                        .executes(ctx -> {
+                                                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                                            String name = StringArgumentType.getString(ctx, "name");
+                                                            int maxRadius = IntegerArgumentType.getInteger(ctx, "maxRadius");
+                                                            int minRadius = IntegerArgumentType.getInteger(ctx, "minRadius");
+                                                            for(ServerPlayer target : targets){
+                                                                boolean canPlace = placeHead(target, name, maxRadius, minRadius);
+                                                                if(canPlace)
+                                                                    ctx.getSource().sendSuccess(() -> Component.literal("Placed a head near player " + target.getName().getString()), true);
+                                                                else
+                                                                    ctx.getSource().sendSuccess(() -> Component.literal("Couldn't place head near player " + target.getName().getString()), true);
+                                                            }
+                                                            return 1;
+                                                        }))))));
 
         dispatcher.register(
-                literal("resetMassages")
+                literal("playScarySound")
                         .requires(src -> src.hasPermission(2))
-                                .executes(ctx -> {
-                                    SavedDataHorror savedData = SavedDataHorror.get(ctx.getSource().getServer());
-                                    savedData.setPlayerMessages(new ArrayList<>());
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
-                                    return 1;
-                                }));
+                        .then(Commands.argument("targets", EntityArgument.players()).
+                                then(Commands.argument("radius", IntegerArgumentType.integer(0))
+                                        .executes(ctx -> {
+                                            Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
+                                            int radius = IntegerArgumentType.getInteger(ctx, "radius");
+                                            for(ServerPlayer target : targets){
+                                                boolean didPlay = playScarySound(target, radius);
+                                                if(didPlay)
+                                                    ctx.getSource().sendSuccess(() -> Component.literal("Played a scary sound near player " + target.getName().getString()), true);
+                                                else
+                                                    ctx.getSource().sendSuccess(() -> Component.literal("Couldn't play a scary sound because the scary_sound_list config is empty"), true);
+                                            }
+                                            return 1;
+                                        }))));
+
+        dispatcher.register(
+                literal("resetMessages")
+                        .requires(src -> src.hasPermission(2))
+                        .executes(ctx -> {
+                            SavedDataHorror savedData = SavedDataHorror.get(ctx.getSource().getServer());
+                            savedData.setPlayerMessages(new ArrayList<>());
+                            ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
+                            return 1;
+                        }));
     }
 
     // ------EVENTS------
@@ -368,7 +388,6 @@ public class CommonClass{
     }
 
     public static boolean addFakeJoiner(MinecraftServer server, String name, boolean canBeTalker){
-        //System.out.println("addFakeJoiner(boolean canBeTalker)");
         if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
         if(playerList.isEmpty()) return false;
@@ -393,16 +412,14 @@ public class CommonClass{
         FAKE_JOINERS.put(fake, lifeTime);
 
         // is talker?
-        if(canBeTalker && random.nextBoolean()) {
-            SavedDataHorror savedData = SavedDataHorror.get(server);
+        SavedDataHorror savedData = SavedDataHorror.get(server);
+        if(canBeTalker && random.nextBoolean() && !savedData.getPlayerMessages().isEmpty())
             FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(random.nextInt(savedData.getPlayerMessages().size() - 1)), random.nextInt(1, lifeTime - 1)});
-        }
 
         return true;
     }
 
     public static boolean addFakeJoiner(MinecraftServer server, String name, String msg){
-        //System.out.println("addFakeJoiner(String msg)");
         if (server == null) return false;
         List<ServerPlayer> playerList = server.getPlayerList().getPlayers();
         if(playerList.isEmpty()) return false;
@@ -432,7 +449,6 @@ public class CommonClass{
     }
 
     public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
-        //System.out.println("removeFakeJoiner");
         Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
         server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
@@ -441,7 +457,6 @@ public class CommonClass{
     }
 
     public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean hideNameTag) {
-        //System.out.println("spawnFakePlayer");
         MinecraftServer server = target.getServer();
         if (server == null) return;
 
@@ -507,15 +522,9 @@ public class CommonClass{
         if (values != null && !values.isEmpty()) {
             server.getPlayerList().broadcastAll(new ClientboundSetEntityDataPacket(fake.getId(), values));
         }
-
-//        if(!isHerobrine){
-//            ClientboundPlayerInfoUpdatePacket updateList = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED, fake);
-//            server.getPlayerList().broadcastAll(updateList);
-//        }
     }
 
     public static void removeFakePlayer(MinecraftServer server, ServerPlayer fake) {
-        //System.out.println("removeFakePlayer");
         ClientboundPlayerInfoRemovePacket removeInfo = new ClientboundPlayerInfoRemovePacket(List.of(fake.getUUID()));
         ClientboundRemoveEntitiesPacket removeEntity = new ClientboundRemoveEntitiesPacket(fake.getId());
         fake.remove(Entity.RemovalReason.DISCARDED);
@@ -524,7 +533,6 @@ public class CommonClass{
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){
-        //System.out.println("breakTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -537,7 +545,6 @@ public class CommonClass{
     }
 
     public static void replaceTorches(ServerPlayer target, int minRange, int maxRange){
-        //System.out.println("replaceTorches");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
@@ -550,7 +557,6 @@ public class CommonClass{
     }
 
     public static boolean hitPlayerLightning(ServerPlayer target) {
-        //System.out.println("hitPlayerLightning");
         ServerLevel level = target.level();
         if(!level.canSeeSky(target.blockPosition())) return false;
         LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
@@ -561,7 +567,6 @@ public class CommonClass{
     }
 
     public static void fakeMining(ServerPlayer target) {
-        //System.out.println("fakeMining");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -593,7 +598,6 @@ public class CommonClass{
     }
 
     public static void fakeSteps(ServerPlayer target) {
-        //System.out.println("fakeSteps");
         ServerLevel level = target.level();
 
         List<BlockPos> validPos = new ArrayList<>();
@@ -623,13 +627,11 @@ public class CommonClass{
         MinecraftServer server = target.getServer();
         BlockPos playerPos = new BlockPos((int)target.getX(), 319, (int)target.getZ());
 
-
         server.overworld().setBlockAndUpdate(playerPos, Blocks.BEDROCK.defaultBlockState());
         listener.teleport(((int)target.getX()) + 0.5, 320, ((int)target.getZ()) + 0.5, target.getYRot(), target.getXRot());
     }
 
     public static void placeSmallTrap(ServerPlayer target) {
-        //System.out.println("placeSmallTrap");
         MinecraftServer server = target.getServer();
         ServerLevel level = target.level();
 
@@ -644,7 +646,6 @@ public class CommonClass{
     }
 
     public static void startFire(ServerPlayer target, int radius) {
-        //System.out.println("startFire");
         ServerLevel level = target.level();
         Optional<BlockPos> targetPos = findBurnablePos(target, level, radius);
         if(targetPos.isEmpty()) return;
@@ -670,7 +671,6 @@ public class CommonClass{
     }
 
     public static void removeLeaves(ServerPlayer target, int maxRadius, int minRadius) {
-        //System.out.println("removeLeaves");
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
@@ -711,7 +711,6 @@ public class CommonClass{
         level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
             String randomSignText = random_signs_texts.get(random.nextInt(random_signs_texts.size()));
-            //System.out.println("placeSign " + randomSignText);
             String[] lines = randomSignText.split("\\r?\\n");
             SignText text = sign.getText(true)
                     .setMessage(0, Component.literal(lines[0]))
@@ -756,6 +755,18 @@ public class CommonClass{
             head.setChanged();
         }
 
+        return true;
+    }
+
+    public static boolean playScarySound(ServerPlayer target, int radius) {
+        ServerLevel level = target.level();
+        List<String> soundNamesList = ServersideHorrorConfig.scary_sound_list;
+        if (soundNamesList.isEmpty())
+            return false;
+        String soundName = soundNamesList.get(random.nextInt(soundNamesList.size()-1));
+        SoundEvent scarySound = BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse(soundName));
+        BlockPos soundPos = target.getOnPos().offset(random.nextInt(-radius, radius), random.nextInt(-radius, radius), random.nextInt(-radius, radius));
+        level.playSound(null, soundPos, scarySound, SoundSource.AMBIENT, 1f, 1f);
         return true;
     }
 

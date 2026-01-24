@@ -1,7 +1,6 @@
 package com.mars.serversidehorror.mixin;
 
 import com.mars.serversidehorror.SavedDataHorror;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

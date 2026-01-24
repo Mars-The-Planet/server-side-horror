@@ -28,7 +28,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -102,7 +102,7 @@ public class CommonClass{
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 literal("addFakeJoiner")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("fakesName", StringArgumentType.word())
                             .executes(ctx -> {
                                 String fakesName = StringArgumentType.getString(ctx, "fakesName");
@@ -113,7 +113,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("spawnFakePlayer")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("fakesName", StringArgumentType.word())
                         .then(Commands.argument("radius", IntegerArgumentType.integer(0))
@@ -130,7 +130,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("spawnFakePlayer")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
                                     targets.forEach(target -> spawnFakePlayer(target, "MarsThePlanet_", 40, true));
@@ -140,7 +140,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("hitPlayerLightning")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -151,7 +151,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("particleJumpScare")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -162,7 +162,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("setLongNight")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                 .executes(ctx -> {
                                     MinecraftServer server = ctx.getSource().getServer();
                                     ServerLevel level = server.overworld();
@@ -175,7 +175,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("breakTorches")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
@@ -190,7 +190,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("replaceTorches")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
@@ -205,7 +205,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("fakeMining")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -216,7 +216,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("fakeSteps")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -227,7 +227,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("setupNewTrap")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .executes(ctx -> {
                                     Collection<ServerPlayer> targets = EntityArgument.getPlayers(ctx, "targets");
@@ -239,7 +239,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("startRandomFire")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("radius", IntegerArgumentType.integer(0))
                                 .executes(ctx -> {
@@ -252,7 +252,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("removeLeaves")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
@@ -267,7 +267,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("placeSign")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                         .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
                         .then(Commands.argument("minRadius", IntegerArgumentType.integer(0))
@@ -287,7 +287,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("placeHead")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
                                 .then(Commands.argument("name", StringArgumentType.word())
                                 .then(Commands.argument("maxRadius", IntegerArgumentType.integer(0))
@@ -309,7 +309,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("playScarySound")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players()).
                                 then(Commands.argument("radius", IntegerArgumentType.integer(0))
                                     .executes(ctx -> {
@@ -327,7 +327,7 @@ public class CommonClass{
 
         dispatcher.register(
                 literal("resetMessages")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                 .executes(ctx -> {
                                     SavedDataHorror savedData = SavedDataHorror.get(ctx.getSource().getServer());
                                     savedData.setPlayerMessages(new ArrayList<>());
@@ -636,7 +636,7 @@ public class CommonClass{
         ServerLevel level = target.level();
 
         StructureTemplateManager manager = server.getStructureManager();
-        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
+        Optional<StructureTemplate> optionalTemplate = manager.get(Identifier.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();
@@ -658,7 +658,7 @@ public class CommonClass{
         MinecraftServer server = target.level().getServer();
         ServerLevel level = target.level();
         StructureTemplateManager manager = server.getStructureManager();
-        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
+        Optional<StructureTemplate> optionalTemplate = manager.get(Identifier.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();
@@ -771,7 +771,7 @@ public class CommonClass{
         if (soundNamesList.isEmpty())
             return false;
         String soundName = soundNamesList.get(random.nextInt(soundNamesList.size()-1));
-        SoundEvent scarySound = BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse(soundName));
+        SoundEvent scarySound = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.parse(soundName));
         BlockPos soundPos = target.getOnPos().offset(random.nextInt(-radius, radius), random.nextInt(-radius, radius), random.nextInt(-radius, radius));
         level.playSound(null, soundPos, scarySound, SoundSource.AMBIENT, 1f, 1f);
         return true;

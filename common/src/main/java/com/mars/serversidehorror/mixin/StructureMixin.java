@@ -4,7 +4,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -32,8 +32,8 @@ public abstract class StructureMixin {
     private void generate(Holder<Structure> structure, ResourceKey<Level> level, RegistryAccess registryAccess, ChunkGenerator chunkGenerator, BiomeSource biomeSource, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed, ChunkPos chunkPos, int references, LevelHeightAccessor heightAccessor, Predicate<Holder<Biome>> validBiome, CallbackInfoReturnable<StructureStart> cir) {
         Holder.Direct direct = new Holder.Direct(this);
 
-        ResourceLocation structureID = registryAccess.lookupOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
-        if(!old_villages_enable && structureID.equals(ResourceLocation.fromNamespaceAndPath(MOD_ID, "village_old_plains")))
+        Identifier structureID = registryAccess.lookupOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
+        if(!old_villages_enable && structureID.equals(Identifier.fromNamespaceAndPath(MOD_ID, "village_old_plains")))
             cir.setReturnValue(StructureStart.INVALID_START);
 
         if(structureID.getPath().contains("traps/trap_")) {

@@ -82,15 +82,15 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static int random_fake_joiner_chance = 720000;
     @Entry public static boolean random_fake_joiner_enable = true;
     @Entry public static List<String> random_fake_joiner_list = Lists.newArrayList("Projekt_M;BAF;wusup;Huh, wrong server;Hello?;I want to play with you;Want to be friends?",
-            "IceBreak;Make a wish;No eyes always watches");
+            "MarsThePlanet_;Make a wish;No eyes always watches");
 
     @Entry public static int starer_chance = 420000;
     @Entry public static boolean starer_enable = true;
-    @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
+    @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "MarsThePlanet_", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
 
     @Entry public static int heads_from_list_chance = 800000;
     @Entry public static boolean heads_from_list_enable = true;
-    @Entry public static List<String> heads_from_list_list = Lists.newArrayList("Projekt_M", "IceBreak", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
+    @Entry public static List<String> heads_from_list_list = Lists.newArrayList("Projekt_M", "MarsThePlanet_", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
 
     @Entry public static int scary_sound_chance = 1000000;
     @Entry public static boolean scary_sound_enable = true;

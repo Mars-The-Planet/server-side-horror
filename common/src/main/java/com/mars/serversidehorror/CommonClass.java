@@ -856,7 +856,7 @@ public class CommonClass{
         } catch (Exception e) {
             Constants.LOG.info("Couldn't find player{}, the fake player is going to use the default skin", name);
             Constants.LOG.warn(String.valueOf(e));
-            return getSkin("IceBreak");
+            return getSkin("MarsThePlanet_");
         }
     }
 

@@ -2,6 +2,7 @@ package com.mars.serversidehorror.mixin;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
@@ -30,7 +31,7 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 public abstract class StructureMixin {
     @Inject(method = "generate", at = @At("HEAD"), cancellable = true)
     private void generate(Holder<Structure> structure, ResourceKey<Level> level, RegistryAccess registryAccess, ChunkGenerator chunkGenerator, BiomeSource biomeSource, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed, ChunkPos chunkPos, int references, LevelHeightAccessor heightAccessor, Predicate<Holder<Biome>> validBiome, CallbackInfoReturnable<StructureStart> cir) {
-        Holder.Direct direct = new Holder.Direct(this);
+        Holder.Direct direct = new Holder.Direct(this, DataComponentMap.EMPTY);
 
         Identifier structureID = registryAccess.lookupOrThrow(Registries.STRUCTURE).getKey((Structure)direct.value());
         if(!old_villages_enable && structureID.equals(Identifier.fromNamespaceAndPath(MOD_ID, "village_old_plains")))

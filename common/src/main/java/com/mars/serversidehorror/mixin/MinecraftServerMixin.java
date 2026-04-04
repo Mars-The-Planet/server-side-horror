@@ -45,7 +45,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
     @Unique private static int last_fake_block_stepped_on = 0;
 
     public MinecraftServerMixin(String name) {
-        super(name);
+        super(name, false);
     }
 
     @Inject(at = @At("HEAD"), method = "tickServer")

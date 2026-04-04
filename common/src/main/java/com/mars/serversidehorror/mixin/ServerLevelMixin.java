@@ -26,7 +26,7 @@ public abstract class ServerLevelMixin {
         if(!tickratemanager.runsNormally())
             return;
 
-        long time = self.getLevelData().getDayTime();
+        long time = self.getLevelData().getGameTime();
         SavedDataHorror savedData = SavedDataHorror.get(self.getServer());
 
         //Midnight - rolls a chance to be a long night

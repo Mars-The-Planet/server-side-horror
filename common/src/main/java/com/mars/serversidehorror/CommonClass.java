@@ -18,6 +18,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -40,6 +41,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.clock.ServerClockManager;
+import net.minecraft.world.clock.WorldClock;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -168,7 +171,9 @@ public class CommonClass{
                                     ServerLevel level = server.overworld();
                                     SavedDataHorror savedData = SavedDataHorror.get(server);
                                     savedData.setLongNight(true);
-                                    level.setDayTime(17999);
+                                    Holder<WorldClock> clock = level.dimensionType().defaultClock().orElseThrow();
+                                    setTotalTicks(ctx.getSource(), clock, 17999);
+                                    //level.setDayTime(17999);
                                     ctx.getSource().sendSuccess(() -> Component.literal("Set Long Night"), true);
                                     return 1;
                                 }));
@@ -334,6 +339,13 @@ public class CommonClass{
                                     ctx.getSource().sendSuccess(() -> Component.literal("Successfully reset all messages"), true);
                                     return 1;
                                 }));
+    }
+
+    private static int setTotalTicks(CommandSourceStack source, Holder< WorldClock > clock, int totalTicks) {
+        ServerClockManager clockManager = source.getServer().clockManager();
+        clockManager.setTotalTicks(clock, totalTicks);
+        source.sendSuccess(() -> Component.translatable("commands.time.set.absolute", clock.getRegisteredName(), totalTicks), true);
+        return totalTicks;
     }
 
     // ------EVENTS------

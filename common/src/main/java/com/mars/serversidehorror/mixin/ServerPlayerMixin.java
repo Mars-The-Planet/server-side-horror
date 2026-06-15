@@ -1,7 +1,6 @@
 package com.mars.serversidehorror.mixin;
 
 import com.mars.serversidehorror.SavedDataHorror;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,8 +26,8 @@ public class ServerPlayerMixin {
             if(herobrine_starer_enable && chanceOneIn(herobrine_starer_chance) && !FAKE_PLAYERS.containsKey(self))
                 spawnFakePlayer(self, "MarsThePlanet_", 40, true);
 
-            if(starer_enable && chanceOneIn(starer_chance) && !FAKE_PLAYERS.containsKey(self)){
-                String fakeName = starer_list.get(random.nextInt(starer_list.size()));
+            if(starer_enable && chanceOneIn(starer_chance) && !FAKE_PLAYERS.containsKey(self) && !starer_list.isEmpty()){
+                String fakeName = starer_list.get(safeRandomRange(starer_list.size()));
                 spawnFakePlayer(self, fakeName, 40, false);
             }
 
@@ -59,8 +58,8 @@ public class ServerPlayerMixin {
             if(random_signs_enable && chanceOneIn(random_signs_chance) && !FAKE_PLAYERS.containsKey(self))
                 placeSign(self, 30, 10);
 
-            if(heads_from_list_enable && chanceOneIn(heads_from_list_chance) && !FAKE_PLAYERS.containsKey(self))
-                placeHead(self, heads_from_list_list.get(random.nextInt(heads_from_list_list.size() - 1)), 30, 10);
+            if(heads_from_list_enable && chanceOneIn(heads_from_list_chance) && !FAKE_PLAYERS.containsKey(self) && !heads_from_list_list.isEmpty())
+                placeHead(self, heads_from_list_list.get(safeRandomRange(heads_from_list_list.size() - 1)), 30, 10);
 
             if(scary_sound_enable && chanceOneIn(scary_sound_chance) && !FAKE_PLAYERS.containsKey(self))
                 playScarySound(self, 16);
@@ -68,7 +67,8 @@ public class ServerPlayerMixin {
             if(random_heads_enable && chanceOneIn(random_heads_chance) && !FAKE_PLAYERS.containsKey(self)) {
                 SavedDataHorror savedData = SavedDataHorror.get(self.level().getServer());
                 List<String> playerNames = savedData.getSeenPlayers();
-                placeHead(self, playerNames.get(random.nextInt(playerNames.size() - 1)), 30, 10);
+                if (!playerNames.isEmpty())
+                    placeHead(self, playerNames.get(safeRandomRange(playerNames.size() - 1)), 30, 10);
             }
         }
 

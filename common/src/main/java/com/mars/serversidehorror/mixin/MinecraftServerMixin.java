@@ -186,7 +186,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
-                addFakeJoiner(self, playerNames.get(random.nextInt(playerNames.size())), true);
+                addFakeJoiner(self, playerNames.get(safeRandomRange(playerNames.size())), true);
             }
         }
 
@@ -194,38 +194,11 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if (random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)) {
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
-            String[] name_msg = random_fake_joiner_list.get(random.nextInt(random_fake_joiner_list.size())).split(";");
-            addFakeJoiner(self, name_msg[0], name_msg[random.nextInt(1, name_msg.length)]);
+            if (!random_fake_joiner_list.isEmpty()) {
+                String[] name_msg = random_fake_joiner_list.get(safeRandomRange(random_fake_joiner_list.size())).split(";");
+                addFakeJoiner(self, name_msg[0], name_msg[safeRandomRange(1, name_msg.length)]);
+            }
         }
-
-        // TESTING
-        if (this.tickCount % 100 != 0) return;
-//        DimensionDataStorage storage = self.overworld().getDataStorage();
-//        SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
-//        System.out.println(savedData.getPlayerMessages().size());
-        //addFakeJoiner(self, "Projekt_M", "BAF");
-//        this.getPlayerList().getPlayers().forEach(target -> joinInDungeon(target));
-//        System.out.println("TED");
-//        this.getPlayerList().getPlayers().forEach(target -> placeSmallTrap(target));
-//        System.out.println("TED");
-//        this.getPlayerList().getPlayers().forEach(target -> fakeSteps(target));
-//        this.getPlayerList().getPlayers().forEach(target -> fakeMining(target));
-//        this.getPlayerList().getPlayers().forEach(target -> hitPlayerLightning(target));
-
-//        this.getPlayerList().getPlayers().forEach(target -> TO_BE_JUMP_SCARED.add(target));
-
-//        List<String> playerNames = getSeenPlayers((MinecraftServer)(Object) this);
-//        playerNames.removeAll(List.of(((MinecraftServer)(Object) this).getPlayerList().getPlayerNamesArray()));
-//        if(!playerNames.isEmpty()) {
-//            addFakeJoiner((MinecraftServer)(Object) this, playerNames.get(random.nextInt(playerNames.size())));
-//        }
-
-//        if(fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
-//            for (ServerPlayer player : this.getPlayerList().getPlayers()) {
-//                if(FAKE_PLAYERS.containsKey(player))  return;
-//                spawnFakePlayer(player, "MarsThePlanet_", 20, true);
-//            }
-//        }
     }
 
     // literally 1984

@@ -3,11 +3,9 @@ package com.mars.serversidehorror.mixin;
 import com.mars.serversidehorror.SavedDataHorror;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.PlayerChatMessage;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerInfo;
 import net.minecraft.server.TickTask;
@@ -19,16 +17,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
@@ -43,11 +32,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import static com.mars.serversidehorror.CommonClass.*;
-import static com.mars.serversidehorror.Constants.MOD_ID;
 import static com.mars.serversidehorror.Constants.SAVED_DATA_HORROR;
 import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
@@ -186,7 +173,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
-                addFakeJoiner(self, playerNames.get(random.nextInt(playerNames.size())), true);
+                addFakeJoiner(self, playerNames.get(safeRandomRange(playerNames.size())), true);
             }
         }
 
@@ -194,8 +181,10 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         if (random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)) {
             List<String> playerNames = getSeenPlayers(self);
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
-            String[] name_msg = random_fake_joiner_list.get(random.nextInt(random_fake_joiner_list.size())).split(";");
-            addFakeJoiner(self, name_msg[0], name_msg[random.nextInt(1, name_msg.length)]);
+            if (!random_fake_joiner_list.isEmpty()) {
+                String[] name_msg = random_fake_joiner_list.get(safeRandomRange(random_fake_joiner_list.size())).split(";");
+                addFakeJoiner(self, name_msg[0], name_msg[safeRandomRange(1, name_msg.length)]);
+            }
         }
     }
 

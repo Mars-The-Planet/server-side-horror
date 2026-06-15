@@ -413,14 +413,16 @@ public class CommonClass{
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(updateList);
 
-        int lifeTime = random.nextInt(600, 60000);
+        int lifeTime = safeRandomRange(600, 60000);
         FAKE_JOINERS.put(fake, lifeTime);
 
         // is talker?
         DimensionDataStorage storage = server.overworld().getDataStorage();
         SavedDataHorror savedData = storage.computeIfAbsent(new SavedData.Factory<>(SavedDataHorror::create, SavedDataHorror::load, null), SAVED_DATA_HORROR);
         if(canBeTalker && random.nextBoolean() && !savedData.getPlayerMessages().isEmpty()) {
-            FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(random.nextInt(savedData.getPlayerMessages().size() - 1)), random.nextInt(1, lifeTime - 1)});
+            int msgTime = safeRandomRange(1, lifeTime);
+            int msgId = safeRandomRange(savedData.getPlayerMessages().size());
+            FAKE_JOINERS_TALKERS.put(fake, new Object[]{savedData.getPlayerMessages().get(msgId), msgTime});
         }
 
         return true;
@@ -447,10 +449,10 @@ public class CommonClass{
         server.getPlayerList().broadcastAll(addInfo);
         server.getPlayerList().broadcastAll(updateList);
 
-        int lifeTime = random.nextInt(600, 60000);
+        int lifeTime = safeRandomRange(600, 60000);
         FAKE_JOINERS.put(fake, lifeTime);
 
-        FAKE_JOINERS_TALKERS.put(fake, new Object[]{msg, random.nextInt(1, lifeTime - 1)});
+        FAKE_JOINERS_TALKERS.put(fake, new Object[]{msg, safeRandomRange(1, lifeTime)});
 
         return true;
     }
@@ -549,7 +551,7 @@ public class CommonClass{
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
-        BlockPos targetedTorch = torches.get(random.nextInt(torches.size()));
+        BlockPos targetedTorch = torches.get(safeRandomRange(torches.size()));
         TORCHES_TO_BE_BROKEN.put(targetedTorch,target);
         List<BlockPos> targetedTorches = getTorchesInRadius(target, targetedTorch, level, 0, 15);
         targetedTorches.forEach(pos -> TORCHES_TO_BE_BROKEN.put(pos, target));
@@ -561,7 +563,7 @@ public class CommonClass{
         BlockPos playerPos = target.getOnPos();
         List<BlockPos> torches = getTorchesInRadius(target, playerPos, level, minRange, maxRange);
         if(torches.isEmpty())   return;
-        BlockPos targetedTorch = torches.get(random.nextInt(torches.size()));
+        BlockPos targetedTorch = torches.get(safeRandomRange(torches.size()));
         TORCHES_TO_BE_REPLACED.put(targetedTorch,target);
         List<BlockPos> targetedTorches = getTorchesInRadius(target, targetedTorch, level, 0, 15);
         targetedTorches.forEach(pos -> TORCHES_TO_BE_REPLACED.put(pos, target));
@@ -601,8 +603,8 @@ public class CommonClass{
         }
         if(validPos.isEmpty())  return;
         Direction dir = Direction.Plane.HORIZONTAL.getRandomDirection(random);
-        BlockPos.MutableBlockPos pos = validPos.get(random.nextInt(validPos.size())).mutable();
-        for (int i = 0; i < random.nextInt(10); i++) {
+        BlockPos.MutableBlockPos pos = validPos.get(safeRandomRange(validPos.size())).mutable();
+        for (int i = 0; i < safeRandomRange(10); i++) {
             pos.move(dir);
             BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos), target);
             BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos.above()), target);
@@ -628,8 +630,8 @@ public class CommonClass{
         }
         if(validPos.isEmpty())  return;
         Direction dir = Direction.Plane.HORIZONTAL.getRandomDirection(random);
-        BlockPos.MutableBlockPos pos = validPos.get(random.nextInt(validPos.size())).mutable();
-        for (int i = 0; i < random.nextInt(20); i++) {
+        BlockPos.MutableBlockPos pos = validPos.get(safeRandomRange(validPos.size())).mutable();
+        for (int i = 0; i < safeRandomRange(20); i++) {
             pos.move(dir);
             BLOCKS_TO_BE_STEPPED_ON_FAKE.put(new BlockPos(pos), target);
         }
@@ -649,7 +651,7 @@ public class CommonClass{
         ServerLevel level = target.serverLevel();
 
         StructureTemplateManager manager = server.getStructureManager();
-        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + random.nextInt(1, 5)));
+        Optional<StructureTemplate> optionalTemplate = manager.get(ResourceLocation.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + safeRandomRange(1, 5)));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
         StructureTemplate template = optionalTemplate.get();
@@ -720,10 +722,11 @@ public class CommonClass{
 
         if(candidates.isEmpty()) return false;
 
-        BlockPos finalPos = candidates.get(random.nextInt(candidates.size()));
-        level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, random.nextInt(16)));
+        BlockPos finalPos = candidates.get(safeRandomRange(candidates.size()));
+        level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, safeRandomRange(16)));
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
-            String[] lines = random_signs_texts.get(random.nextInt(random_signs_texts.size())).split("\\r?\\n");
+            if (random_signs_texts.isEmpty()) return false;
+            String[] lines = random_signs_texts.get(safeRandomRange(random_signs_texts.size())).split("\\r?\\n");
             SignText text = sign.getText(true)
                     .setMessage(0, Component.literal(lines[0]))
                     .setMessage(1, Component.literal(lines[1]))
@@ -758,8 +761,8 @@ public class CommonClass{
 
         if(candidates.isEmpty()) return false;
 
-        BlockPos finalPos = candidates.get(random.nextInt(candidates.size()));
-        level.setBlockAndUpdate(finalPos, Blocks.PLAYER_HEAD.defaultBlockState().setValue(SkullBlock.ROTATION, random.nextInt(16)));
+        BlockPos finalPos = candidates.get(safeRandomRange(candidates.size()));
+        level.setBlockAndUpdate(finalPos, Blocks.PLAYER_HEAD.defaultBlockState().setValue(SkullBlock.ROTATION, safeRandomRange(16)));
 
         if (level.getBlockEntity(finalPos) instanceof SkullBlockEntity head) {
             ResolvableProfile profile = new ResolvableProfile(Optional.of(name), Optional.empty(), new PropertyMap());
@@ -775,16 +778,20 @@ public class CommonClass{
         List<String> soundNamesList = ServersideHorrorConfig.scary_sound_list;
         if (soundNamesList.isEmpty())
             return false;
-        String soundName = soundNamesList.get(random.nextInt(soundNamesList.size()-1));
+        String soundName = soundNamesList.get(safeRandomRange(soundNamesList.size()));
         SoundEvent scarySound = BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse(soundName));
-        BlockPos soundPos = target.getOnPos().offset(random.nextInt(-radius, radius), random.nextInt(-radius, radius), random.nextInt(-radius, radius));
+        // https://stackoverflow.com/questions/27976857/how-do-i-get-a-random-number-with-a-negative-number-in-range
+        int randomX = safeRandomRange(radius + radius) - radius;
+        int randomY = safeRandomRange(radius + radius) - radius;
+        int randomZ = safeRandomRange(radius + radius) - radius;
+        BlockPos soundPos = target.getOnPos().offset(randomX, randomY, randomZ);
         level.playSound(null, soundPos, scarySound, SoundSource.AMBIENT, 1f, 1f);
         return true;
     }
 
     // ------HELPER METHODS------
     public static boolean chanceOneIn(int denominator){
-        return random.nextInt(denominator) == 0;
+        return safeRandomRange(denominator) == 0;
     }
 
     public static boolean isGracePeriodUp(ServerLevel level) {
@@ -901,7 +908,7 @@ public class CommonClass{
 
         if (valid.isEmpty()) return Optional.empty();
         // picks a random one from the valid spots
-        return Optional.of(valid.get(random.nextInt(valid.size())));
+        return Optional.of(valid.get(safeRandomRange(valid.size())));
     }
 
     private static Optional<BlockPos> findPlacement(ServerLevel level, BlockPos around, StructureTemplate template, StructurePlaceSettings settings, int radiusBlocks, ServerPlayer player) {
@@ -1065,7 +1072,7 @@ public class CommonClass{
         }
 
         if (valid.isEmpty()) return Optional.empty();
-        return Optional.of(valid.get(random.nextInt(valid.size())));
+        return Optional.of(valid.get(safeRandomRange(valid.size())));
     }
 
     private static boolean hasFlammableNeighbours(LevelReader level, BlockPos pos) {
@@ -1088,5 +1095,15 @@ public class CommonClass{
         int b = Math.round(rgb[2] * 255) & 0xFF;
 
         return (r << 16) | (g << 8) | b;
+    }
+
+    public static int safeRandomRange(int min, int max) {
+        if (min >= max) return 0;
+        return random.nextInt(min, max);
+    }
+
+    public static int safeRandomRange(int max) {
+        if (0 >= max) return 0;
+        return random.nextInt(max);
     }
 }

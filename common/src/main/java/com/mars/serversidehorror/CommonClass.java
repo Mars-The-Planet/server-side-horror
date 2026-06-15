@@ -485,7 +485,6 @@ public class CommonClass {
     }
 
     public static void spawnFakePlayer(ServerPlayer target, String name, int radius, boolean hideNameTag) {
-        System.out.println("HEROBRINE");
         MinecraftServer server = target.getServer();
         if (server == null) return;
 

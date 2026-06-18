@@ -43,10 +43,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.clock.ServerClockManager;
 import net.minecraft.world.clock.WorldClock;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -569,7 +566,7 @@ public class CommonClass{
     public static boolean hitPlayerLightning(ServerPlayer target) {
         ServerLevel level = target.level();
         if(!level.canSeeSky(target.blockPosition())) return false;
-        LightningBolt lightningbolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
+        LightningBolt lightningbolt = EntityTypes.LIGHTNING_BOLT.create(level, EntitySpawnReason.EVENT);
         lightningbolt.snapTo(Vec3.atBottomCenterOf(target.blockPosition()));
         level.addFreshEntity(lightningbolt);
         spawnFakePlayer(target, "MarsThePlanet_", 20, true);
@@ -690,7 +687,7 @@ public class CommonClass{
         Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
 
         for(BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if(pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
             if (!(level.getBlockState(pos).getBlock() instanceof LeavesBlock)) continue;
             BlockState state = level.getBlockState(pos);
             if(state.getValue(LeavesBlock.PERSISTENT)) continue;
@@ -708,7 +705,7 @@ public class CommonClass{
         List<BlockPos> candidates = new ArrayList<>();
 
         for (BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if(pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
             if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
@@ -748,7 +745,7 @@ public class CommonClass{
         List<BlockPos> candidates = new ArrayList<>();
 
         for (BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
+            if(pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
             if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;

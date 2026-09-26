@@ -52,6 +52,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -80,6 +81,7 @@ import static com.mars.serversidehorror.Constants.MOD_ID;
 import static com.mars.serversidehorror.ServersideHorrorConfig.grace_period;
 import static com.mars.serversidehorror.ServersideHorrorConfig.random_signs_texts;
 import static net.minecraft.commands.Commands.literal;
+import static net.minecraft.world.level.block.entity.SignTextSlot.FRONT;
 
 public class CommonClass{
     public static Map<ServerPlayer, Integer> FAKE_PLAYERS = new HashMap<>();
@@ -597,10 +599,11 @@ public class CommonClass{
         if(validPos.isEmpty())  return;
         Direction dir = Direction.Plane.HORIZONTAL.getRandomDirection(random);
         BlockPos.MutableBlockPos pos = validPos.get(safeRandomRange(validPos.size())).mutable();
-        for (int i = 0; i < safeRandomRange(10); i++) {
+        int length = safeRandomRange(10);
+        for (int i = 0; i < length; i++) {
             pos.move(dir);
-            BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos), target);
-            BLOCKS_TO_BE_MINED_FAKE.put(new BlockPos(pos.above()), target);
+            BLOCKS_TO_BE_MINED_FAKE.put(pos.immutable(), target);
+            BLOCKS_TO_BE_MINED_FAKE.put(pos.above(), target);
         }
     }
 
@@ -626,7 +629,7 @@ public class CommonClass{
         BlockPos.MutableBlockPos pos = validPos.get(safeRandomRange(validPos.size())).mutable();
         for (int i = 0; i < safeRandomRange(20); i++) {
             pos.move(dir);
-            BLOCKS_TO_BE_STEPPED_ON_FAKE.put(new BlockPos(pos), target);
+            BLOCKS_TO_BE_STEPPED_ON_FAKE.put(pos.immutable(), target);
         }
     }
 
@@ -643,7 +646,7 @@ public class CommonClass{
         MinecraftServer server = target.level().getServer();
         ServerLevel level = target.level();
 
-        StructureTemplateManager manager = server.getStructureManager();
+        StructureTemplateManager manager = server.getStructureTemplateManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(Identifier.fromNamespaceAndPath(MOD_ID, "small_traps/trap_" + safeRandomRange(1, 5)));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
@@ -665,7 +668,7 @@ public class CommonClass{
     public static void joinInDungeon(ServerPlayer target, ServerGamePacketListenerImpl listener) {
         MinecraftServer server = target.level().getServer();
         ServerLevel level = target.level();
-        StructureTemplateManager manager = server.getStructureManager();
+        StructureTemplateManager manager = server.getStructureTemplateManager();
         Optional<StructureTemplate> optionalTemplate = manager.get(Identifier.fromNamespaceAndPath(MOD_ID, "rejoin_dungeon"));
         if(optionalTemplate.isEmpty()) return;
         StructurePlaceSettings settings = new StructurePlaceSettings().setMirror(Mirror.NONE).setFinalizeEntities(true).setIgnoreEntities(false);
@@ -696,40 +699,39 @@ public class CommonClass{
     }
 
     public static boolean placeSign(ServerPlayer target, int maxRadius, int minRadius) {
+        if (random_signs_texts.isEmpty()) return false;
+
         ServerLevel level = target.level();
         BlockPos playerPos = target.getOnPos();
 
         BlockPos aMax = playerPos.offset(-maxRadius, -maxRadius, -maxRadius);
         BlockPos bMax = playerPos.offset(maxRadius, maxRadius, maxRadius);
-        Iterable<BlockPos> allBlocksInRadius = BlockPos.betweenClosed(aMax, bMax);
         List<BlockPos> candidates = new ArrayList<>();
 
-        for (BlockPos pos : allBlocksInRadius) {
-            if(pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
+        for (BlockPos pos : BlockPos.betweenClosed(aMax, bMax)) {
+            if (pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
             if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
-            candidates.add(new BlockPos(pos));
+            candidates.add(pos.immutable());
         }
 
-        if(candidates.isEmpty()) return false;
+        if (candidates.isEmpty()) return false;
 
         BlockPos finalPos = candidates.get(safeRandomRange(candidates.size()));
-        level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, safeRandomRange(16)));
+        level.setBlockAndUpdate(finalPos, Blocks.OAK_SIGN.defaultBlockState()
+                .setValue(StandingSignBlock.ROTATION, safeRandomRange(16)));
+
         if (level.getBlockEntity(finalPos) instanceof SignBlockEntity sign) {
-            if (random_signs_texts.isEmpty()) return false;
             String randomSignText = random_signs_texts.get(safeRandomRange(random_signs_texts.size()));
             String[] lines = randomSignText.split("\\r?\\n");
-            SignText text = sign.getText(true)
-                    .setMessage(0, Component.literal(lines[0]))
-                    .setMessage(1, Component.literal(lines[1]))
-                    .setMessage(2, Component.literal(lines[2]))
-                    .setMessage(3, Component.literal(lines[3]));
 
-            sign.setText(text, true);
-            sign.setChanged();
-            level.sendBlockUpdated(finalPos, sign.getBlockState(), sign.getBlockState(), 3);
+            SignText.Mutable text = sign.getText(SignTextSlot.FRONT).asMutable();
+            for (int i = 0; i < Math.min(lines.length, SignText.LINES); i++) {
+                text.setLine(i, Component.literal(lines[i]));
+            }
+            sign.setText(text.asImmutable(), SignTextSlot.FRONT);
         }
 
         return true;
@@ -750,7 +752,7 @@ public class CommonClass{
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
-            candidates.add(new BlockPos(pos));
+            candidates.add(pos.immutable());
         }
 
         if(candidates.isEmpty()) return false;
@@ -793,7 +795,7 @@ public class CommonClass{
     // ------HELPER METHODS------
     private static @NotNull ServerEntity getServerEntity(ServerPlayer target, ServerLevel level, ServerPlayer fake) {
         ServerGamePacketListenerImpl conn = target.connection;
-        ServerEntity wrapper = new ServerEntity(level, fake, 0, false, new ServerEntity.Synchronizer() {
+        return new ServerEntity(level, fake, null, false, new ServerEntity.Synchronizer() {
             @Override
             public void sendToTrackingPlayers(Packet<? super ClientGamePacketListener> packet) {
                 conn.send(packet);
@@ -811,7 +813,6 @@ public class CommonClass{
                 }
             }
         });
-        return wrapper;
     }
 
     static GameProfile makeProfileWithSkin(String name, String valueB64, String signature) {
@@ -895,7 +896,7 @@ public class CommonClass{
         for(BlockPos pos : allBlocksInRange){
             if((level.getBlockState(pos).is(Blocks.TORCH) || level.getBlockState(pos).is(Blocks.WALL_TORCH)) &&
                     !pos.closerThan(new Vec3i(centre.getX(), centre.getY(), centre.getZ()), minRange) && !canSeeBlock(player, pos)){
-                torches.add(new BlockPos(pos));
+                torches.add(pos.immutable());
             }
         }
 

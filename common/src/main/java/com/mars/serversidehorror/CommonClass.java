@@ -21,7 +21,9 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -101,6 +103,60 @@ public class CommonClass{
     }
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+
+        dispatcher.register(
+                literal("listFakeJoiner")
+                        .requires(src -> src.hasPermission(2))
+                        .executes(ctx -> {
+                            int i = 0;
+                            for (ServerPlayer fakeJoiner : FAKE_JOINERS.keySet()) {
+                                Component entry = Component.literal("").append(Component.literal(i + ".)").withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.GREEN)).append(
+                                        Component.literal(" Name: ").withStyle(ChatFormatting.BOLD)).append(
+                                        Component.literal(fakeJoiner.getScoreboardName())).append(
+                                                Component.literal(", UUID: ").withStyle(ChatFormatting.BOLD)).append(
+                                                        Component.literal(fakeJoiner.getStringUUID()+ " "))
+                                .append(
+                                        Component.literal("[REMOVE]")
+                                                .withStyle(ChatFormatting.RED)
+                                                .withStyle((style -> style
+                                                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/removeFakeJoiner " + fakeJoiner.getStringUUID()))
+                                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Make this fake player leave")))
+                                                ))
+                                );
+
+
+
+                                ctx.getSource().sendSystemMessage(entry);
+                                i++;
+                            }
+
+                            String successMsg = i + " fake players were found";
+
+                            ctx.getSource().sendSuccess(() -> Component.literal(successMsg), true);
+
+                            return 1;
+                        }));
+
+        dispatcher.register(
+                literal("removeFakeJoiner")
+                        .requires(src -> src.hasPermission(2))
+                        .then(Commands.argument("fakesUUID", StringArgumentType.word())
+                                .executes(ctx -> {
+                                    String fakesUUID = StringArgumentType.getString(ctx, "fakesUUID");
+                                    for (ServerPlayer fakeJoiner : FAKE_JOINERS.keySet()) {
+                                        if (fakeJoiner.getStringUUID().equals(fakesUUID)) {
+                                            fakeJoinerLeave(ctx.getSource().getServer(), fakeJoiner);
+                                            FAKE_JOINERS.remove(fakeJoiner);
+                                            FAKE_JOINERS_TALKERS.remove(fakeJoiner);
+                                            ctx.getSource().sendSuccess(() -> Component.literal("Removed fake joiner with uuid " + fakesUUID), true);
+                                            return 1;
+                                        }
+                                    }
+
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Did not find fake joiner with uuid " + fakesUUID), true);
+                                    return 0;
+                                })));
+
         dispatcher.register(
                 literal("addFakeJoiner")
                         .requires(src -> src.hasPermission(2))
@@ -108,7 +164,7 @@ public class CommonClass{
                                 .executes(ctx -> {
                                     String fakesName = StringArgumentType.getString(ctx, "fakesName");
                                     addFakeJoiner(ctx.getSource().getServer(), fakesName, false);
-                                    ctx.getSource().sendSuccess(() -> Component.literal("Added fake player " + fakesName), true);
+                                    ctx.getSource().sendSuccess(() -> Component.literal("Added fake joiner " + fakesName), true);
                                     return 1;
                                 })));
 
@@ -461,7 +517,7 @@ public class CommonClass{
         return true;
     }
 
-    public static void removeFakeJoiner(MinecraftServer server, ServerPlayer fake) {
+    public static void fakeJoinerLeave(MinecraftServer server, ServerPlayer fake) {
         Component leftMsg = Component.translatable("multiplayer.player.left", fake.getName());
         server.getPlayerList().broadcastSystemMessage(leftMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 

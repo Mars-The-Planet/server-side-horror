@@ -77,7 +77,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
             ServerPlayer fake = entry.getKey();
             int ticksLeft = entry.getValue() - 1;
             if (ticksLeft <= 0) {
-                removeFakeJoiner(self, fake);
+                fakeJoinerLeave(self, fake);
                 joinerIt.remove();
             } else {
                 entry.setValue(ticksLeft);

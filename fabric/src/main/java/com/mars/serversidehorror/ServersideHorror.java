@@ -9,7 +9,7 @@ public class ServersideHorror implements ModInitializer {
         CommonClass.init();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            CommonClass.registerCommands(dispatcher);
+            CommandRegistry.registerCommands(dispatcher);
         });
     }
 }

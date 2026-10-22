@@ -18,6 +18,6 @@ public class ServersideHorror {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        CommonClass.registerCommands(dispatcher);
+        CommandRegistry.registerCommands(dispatcher);
     }
 }

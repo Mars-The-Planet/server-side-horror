@@ -88,6 +88,9 @@ public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static boolean starer_enable = true;
     @Entry public static List<String> starer_list = Lists.newArrayList("Projekt_M", "MarsThePlanet_", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");
 
+    @Entry public static int random_starer_chance = 420000;
+    @Entry public static boolean random_starer_enable = true;
+
     @Entry public static int heads_from_list_chance = 800000;
     @Entry public static boolean heads_from_list_enable = true;
     @Entry public static List<String> heads_from_list_list = Lists.newArrayList("Projekt_M", "MarsThePlanet_", "Filios14", "Ray857", "Harlock195", "MenT97", "DanTDM");

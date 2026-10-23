@@ -1,7 +1,10 @@
 package com.mars.serversidehorror.mixin;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,6 +18,9 @@ import static com.mars.serversidehorror.ServersideHorrorConfig.*;
 
 @Mixin(ServerPlayer.class)
 public class ServerPlayerMixin {
+    @Shadow
+    @Final
+    public MinecraftServer server;
     @Unique
     private double lastX, lastY, lastZ, lastLastX, lastLastY, lastLastZ;
 
@@ -29,6 +35,14 @@ public class ServerPlayerMixin {
             if(starer_enable && chanceOneIn(starer_chance) && !FAKE_PLAYERS.containsKey(self) && !starer_list.isEmpty()){
                 String fakeName = starer_list.get(safeRandomRange(starer_list.size()));
                 spawnFakePlayer(self, fakeName, 40, false);
+            }
+
+            if(random_starer_enable && chanceOneIn(random_starer_chance) && !FAKE_PLAYERS.containsKey(self)){
+                List<String> seenPlayers = getSeenPlayers(this.server);
+                if (!seenPlayers.isEmpty()) {
+                    String starersName = seenPlayers.get(safeRandomRange(seenPlayers.size()));
+                    spawnFakePlayer(self, starersName, 40, false);
+                }
             }
 
             if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self))

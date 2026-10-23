@@ -63,11 +63,15 @@
     {
       "structure": "serversidehorror:traps/trap_16",
       "weight": 8
+    },
+    {
+      "structure": "serversidehorror:traps/trap_17",
+      "weight": 5
     }
   ],
   "placement": {
     "type": "minecraft:random_spread",
-    "spacing": 16,
+    "spacing": 32,
     "separation": 8,
     "salt": 18052011
   }

@@ -50,7 +50,7 @@
     },
     {
       "structure": "serversidehorror:traps/trap_13",
-      "weight": 15
+      "weight": 8
     },
     {
       "structure": "serversidehorror:traps/trap_14",
@@ -59,6 +59,14 @@
     {
       "structure": "serversidehorror:traps/trap_15",
       "weight": 1
+    },
+    {
+      "structure": "serversidehorror:traps/trap_16",
+      "weight": 8
+    },
+    {
+      "structure": "serversidehorror:traps/trap_17",
+      "weight": 5
     }
   ],
   "placement": {

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ServersideHorrorConfig extends DeimosConfig {
     @Entry public static int grace_period = 3;
-    @Entry public static boolean grace_period_applies_to_traps = false;
+    @Entry public static boolean grace_period_applies_to_traps = true;
 
     @Entry public static int herobrine_starer_chance = 120000;
     @Entry public static boolean herobrine_starer_enable = true;

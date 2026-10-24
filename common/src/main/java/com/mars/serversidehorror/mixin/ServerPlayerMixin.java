@@ -31,6 +31,15 @@ public class ServerPlayerMixin {
                 spawnFakePlayer(self, fakeName, 40, false);
             }
 
+            if(random_starer_enable && chanceOneIn(random_starer_chance) && !FAKE_PLAYERS.containsKey(self)){
+                SavedDataHorror savedData = SavedDataHorror.get(self.level().getServer());
+                List<String> seenPlayers = savedData.getSeenPlayers();
+                if (!seenPlayers.isEmpty()) {
+                    String starersName = seenPlayers.get(safeRandomRange(seenPlayers.size()));
+                    spawnFakePlayer(self, starersName, 40, false);
+                }
+            }
+
             if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self))
                 TO_BE_JUMP_SCARED.add(self);
 

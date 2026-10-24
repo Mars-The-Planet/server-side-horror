@@ -12,6 +12,8 @@ import java.util.List;
 
 import static com.mars.serversidehorror.CommonClass.*;
 import static com.mars.serversidehorror.ServersideHorrorConfig.*;
+import static com.mars.serversidehorror.ServersideHorrorConfig.random_starer_chance;
+import static com.mars.serversidehorror.ServersideHorrorConfig.random_starer_enable;
 
 @Mixin(ServerPlayer.class)
 public class ServerPlayerMixin {
@@ -29,6 +31,15 @@ public class ServerPlayerMixin {
             if(starer_enable && chanceOneIn(starer_chance) && !FAKE_PLAYERS.containsKey(self) && !starer_list.isEmpty()){
                 String fakeName = starer_list.get(safeRandomRange(starer_list.size()));
                 spawnFakePlayer(self, fakeName, 40, false);
+            }
+
+            if(random_starer_enable && chanceOneIn(random_starer_chance) && !FAKE_PLAYERS.containsKey(self)){
+                SavedDataHorror savedData = SavedDataHorror.get(self.level().getServer());
+                List<String> seenPlayers = savedData.getSeenPlayers();
+                if (!seenPlayers.isEmpty()) {
+                    String starersName = seenPlayers.get(safeRandomRange(seenPlayers.size()));
+                    spawnFakePlayer(self, starersName, 40, false);
+                }
             }
 
             if(jumpscare_enable && chanceOneIn(jumpscare_chance) && !FAKE_PLAYERS.containsKey(self))

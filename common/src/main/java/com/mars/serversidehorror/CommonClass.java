@@ -302,7 +302,7 @@ public class CommonClass{
     }
 
     // teams go by name so a real player with the same name would keep a hidden nametag forever
-    private static void removeFromNoTags(Scoreboard scoreboard, String name){
+    public static void removeFromNoTags(Scoreboard scoreboard, String name){
         PlayerTeam team = scoreboard.getPlayersTeam(name);
         if(team != null && team.getName().equals("noTags"))
             scoreboard.removePlayerFromTeam(name);

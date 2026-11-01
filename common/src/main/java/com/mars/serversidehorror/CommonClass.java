@@ -463,10 +463,10 @@ public class CommonClass{
 
         for (BlockPos pos : BlockPos.betweenClosed(aMax, bMax)) {
             if (pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(pos.immutable());
         }
 
@@ -501,10 +501,10 @@ public class CommonClass{
 
         for (BlockPos pos : allBlocksInRadius) {
             if(pos.closerToCenterThan(Vec3.atCenterOf(playerPos), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(pos.immutable());
         }
 
@@ -597,6 +597,7 @@ public class CommonClass{
     }
 
     public static boolean chanceOneIn(int denominator){
+        if(denominator <= 0) return false;
         return safeRandomRange(denominator) == 0;
     }
 
@@ -666,11 +667,11 @@ public class CommonClass{
                     if(!level.isEmptyBlock(candidate)) continue;
                     if(!level.isEmptyBlock(candidate.above())) continue;
                     if(!level.getBlockState(candidate.below()).canOcclude()) continue;
-                    if(target.getOnPos() == candidate) continue;
-                    if(target.getOnPos().east() == candidate) continue;
-                    if(target.getOnPos().north() == candidate) continue;
-                    if(target.getOnPos().south() == candidate) continue;
-                    if(target.getOnPos().west() == candidate) continue;
+                    if(target.getOnPos().equals(candidate)) continue;
+                    if(target.getOnPos().east().equals(candidate)) continue;
+                    if(target.getOnPos().north().equals(candidate)) continue;
+                    if(target.getOnPos().south().equals(candidate)) continue;
+                    if(target.getOnPos().west().equals(candidate)) continue;
                     fake.setPos(candidate.getX(), candidate.getY(), candidate.getZ());
                     if(lineOfSight != fake.hasLineOfSight(target)) continue;
 

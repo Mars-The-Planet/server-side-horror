@@ -230,6 +230,8 @@ public class CommonClass{
         String[] skin = getSkin(name);
         GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
+        // set this early, some mods (polymer) need it during the line of sight check
+        fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
 
         // remove nametag
         if(hideNameTag){
@@ -268,7 +270,6 @@ public class CommonClass{
         fake.setYRot(yRot);
         fake.setYHeadRot(yRot);
 
-        fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
         ServerEntity wrapper = getServerEntity(target, level, fake);
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);

@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -165,7 +166,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         // adds a fake player to the tab with a fake join msg
         if (fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
             SavedDataHorror savedData = SavedDataHorror.get(self);
-            List<String> playerNames = savedData.getSeenPlayers();
+            List<String> playerNames = new ArrayList<>(savedData.getSeenPlayers());
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
                 addFakeJoiner(self, playerNames.get(safeRandomRange(playerNames.size())), true);
@@ -175,7 +176,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         // adds a fake player to the tab with a fake join msg from the config
         if (random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)) {
             SavedDataHorror savedData = SavedDataHorror.get(self);
-            List<String> playerNames = savedData.getSeenPlayers();
+            List<String> playerNames = new ArrayList<>(savedData.getSeenPlayers());
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!random_fake_joiner_list.isEmpty()) {
                 String[] name_msg = random_fake_joiner_list.get(safeRandomRange(random_fake_joiner_list.size())).split(";");

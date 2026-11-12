@@ -56,6 +56,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -78,6 +79,7 @@ public class CommonClass {
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_MINED_FAKE = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_STEPPED_ON_FAKE = new HashMap<>();
     public static ServerLevel currentLevel;
+    public static Map<String, String[]> SKINS = new HashMap<>();
 
     public static RandomSource random = RandomSource.create();
 
@@ -86,6 +88,7 @@ public class CommonClass {
     }
 
     // ------EVENTS------
+
     public static void particleJumpScare(ServerPlayer target){
         ServerLevel level = target.serverLevel();
 
@@ -258,6 +261,9 @@ public class CommonClass {
                 hideTagTeam.setNameTagVisibility(Team.Visibility.NEVER);
             }
             scoreboard.addPlayerToTeam(name, hideTagTeam);
+        }
+        else {
+            removeFromNoTags(level.getScoreboard(), name);
         }
 
         // pick spawn
@@ -472,10 +478,10 @@ public class CommonClass {
 
         for (BlockPos pos : allBlocksInRadius) {
             if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(new BlockPos(pos));
         }
 
@@ -511,10 +517,10 @@ public class CommonClass {
 
         for (BlockPos pos : allBlocksInRadius) {
             if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(new BlockPos(pos));
         }
 
@@ -549,7 +555,16 @@ public class CommonClass {
     }
 
     // ------HELPER METHODS------
+
+    // teams go by name so a real player with the same name would keep a hidden nametag forever
+    public static void removeFromNoTags(Scoreboard scoreboard, String name){
+        PlayerTeam team = scoreboard.getPlayersTeam(name);
+        if(team != null && team.getName().equals("noTags"))
+            scoreboard.removePlayerFromTeam(name);
+    }
+
     public static boolean chanceOneIn(int denominator){
+        if(denominator <= 0) return false;
         return safeRandomRange(denominator) == 0;
     }
 
@@ -605,23 +620,34 @@ public class CommonClass {
     }
 
     private static String[] getSkin(String name){
+        if(SKINS.containsKey(name)) return SKINS.get(name);
         try {
             URL profileUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
-            InputStreamReader inputStreamReaderProfile = new InputStreamReader(profileUrl.openStream());
+            URLConnection profileConnection = profileUrl.openConnection();
+            profileConnection.setConnectTimeout(2000);
+            profileConnection.setReadTimeout(2000);
+            InputStreamReader inputStreamReaderProfile = new InputStreamReader(profileConnection.getInputStream());
             String uuid = new JsonParser().parse(inputStreamReaderProfile).getAsJsonObject().get("id").getAsString();
 
             URL userSession = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
-            InputStreamReader inputStreamReaderSession = new InputStreamReader(userSession.openStream());
+            URLConnection sessionConnection = userSession.openConnection();
+            sessionConnection.setConnectTimeout(2000);
+            sessionConnection.setReadTimeout(2000);
+            InputStreamReader inputStreamReaderSession = new InputStreamReader(sessionConnection.getInputStream());
             JsonObject property = new JsonParser().parse(inputStreamReaderSession).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
 
-            return new String[]{
+            String[] skin = new String[]{
                     property.get("value").getAsString(),
                     property.get("signature").getAsString()
             };
+            SKINS.put(name, skin);
+            return skin;
 
         } catch (Exception e) {
             Constants.LOG.info("Couldn't find player{}, the fake player is going to use the default skin", name);
             Constants.LOG.warn(String.valueOf(e));
+            // stops it looping forever when mojang is down
+            if(name.equals("MarsThePlanet_")) return null;
             return getSkin("MarsThePlanet_");
         }
     }
@@ -652,11 +678,11 @@ public class CommonClass {
                     if(!level.isEmptyBlock(candidate)) continue;
                     if(!level.isEmptyBlock(candidate.above())) continue;
                     if(!level.getBlockState(candidate.below()).canOcclude()) continue;
-                    if(target.getOnPos() == candidate) continue;
-                    if(target.getOnPos().east() == candidate) continue;
-                    if(target.getOnPos().north() == candidate) continue;
-                    if(target.getOnPos().south() == candidate) continue;
-                    if(target.getOnPos().west() == candidate) continue;
+                    if(target.getOnPos().equals(candidate)) continue;
+                    if(target.getOnPos().east().equals(candidate)) continue;
+                    if(target.getOnPos().north().equals(candidate)) continue;
+                    if(target.getOnPos().south().equals(candidate)) continue;
+                    if(target.getOnPos().west().equals(candidate)) continue;
                     fake.setPos(candidate.getX(), candidate.getY(), candidate.getZ());
                     if(lineOfSight != fake.hasLineOfSight(target)) continue;
 

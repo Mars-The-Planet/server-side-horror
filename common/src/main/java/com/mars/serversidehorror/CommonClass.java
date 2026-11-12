@@ -242,6 +242,8 @@ public class CommonClass{
                 hideTagTeam.setNameTagVisibility(Team.Visibility.NEVER);
             }
             scoreboard.addPlayerToTeam(name, hideTagTeam);
+        } else {
+            removeFromNoTags(level.getScoreboard(), name);
         }
 
         Optional<BlockPos> spawnOpt = findValidSpawnPos(level, fake, target, radius, true);
@@ -293,6 +295,18 @@ public class CommonClass{
         fake.remove(Entity.RemovalReason.DISCARDED);
         server.getPlayerList().broadcastAll(removeEntity);
         server.getPlayerList().broadcastAll(removeInfo);
+
+        String name = fake.getScoreboardName();
+        boolean sameNameStillAlive = FAKE_PLAYERS.keySet().stream().anyMatch(other -> other != fake && other.getScoreboardName().equals(name));
+        if(!sameNameStillAlive)
+            removeFromNoTags(server.getScoreboard(), name);
+    }
+
+    // teams go by name so a real player with the same name would keep a hidden nametag forever
+    public static void removeFromNoTags(Scoreboard scoreboard, String name){
+        PlayerTeam team = scoreboard.getPlayersTeam(name);
+        if(team != null && team.getName().equals("noTags"))
+            scoreboard.removePlayerFromTeam(name);
     }
 
     public static void breakTorches(ServerPlayer target, int minRange, int maxRange){

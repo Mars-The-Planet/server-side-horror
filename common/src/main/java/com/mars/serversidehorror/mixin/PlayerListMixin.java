@@ -21,6 +21,12 @@ public abstract class PlayerListMixin {
     private void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
         PlayerList self = (PlayerList)(Object)this;
         MinecraftServer server = self.getServer();
+
+        // the fake player might not have despawned if the server crashed or stopped
+        String name = player.getScoreboardName();
+        if(FAKE_PLAYERS.keySet().stream().noneMatch(fake -> fake.getScoreboardName().equals(name)))
+            removeFromNoTags(server.getScoreboard(), name);
+
         if(!isGracePeriodUp(server.overworld()))
             return;
 

@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
@@ -100,7 +101,9 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_BROKEN.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
-                level.destroyBlock(target, true);
+                BlockState state = level.getBlockState(target);
+                if(state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH))
+                    level.destroyBlock(target, true);
                 TORCHES_TO_BE_BROKEN.remove(target);
                 last_torch_breaking = 10;
             }
@@ -113,11 +116,15 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_REPLACED.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
-                if(level.getBlockState(target).is(Blocks.WALL_TORCH))
-                    level.setBlock(target, Blocks.REDSTONE_WALL_TORCH.withPropertiesOf(level.getBlockState(target)), 3);
-                else
-                    level.setBlock(target, Blocks.REDSTONE_TORCH.defaultBlockState(), 3);
-                level.playSound(null, target, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1f, 0.8f);
+                BlockState state = level.getBlockState(target);
+                // torch might have been broken or swapped since it was queued
+                if(state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
+                    if(state.is(Blocks.WALL_TORCH))
+                        level.setBlock(target, Blocks.REDSTONE_WALL_TORCH.withPropertiesOf(state), 3);
+                    else
+                        level.setBlock(target, Blocks.REDSTONE_TORCH.defaultBlockState(), 3);
+                    level.playSound(null, target, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1f, 0.8f);
+                }
                 TORCHES_TO_BE_REPLACED.remove(target);
                 last_torch_replaced = 10;
             }

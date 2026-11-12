@@ -76,6 +76,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -95,6 +96,7 @@ public class CommonClass{
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_MINED_FAKE = new HashMap<>();
     public static Map<BlockPos, ServerPlayer> BLOCKS_TO_BE_STEPPED_ON_FAKE = new HashMap<>();
     public static ServerLevel currentLevel;
+    public static Map<String, String[]> SKINS = new HashMap<>();
 
     public static RandomSource random = RandomSource.create();
 
@@ -163,7 +165,7 @@ public class CommonClass{
         Component joinMsg = Component.translatable("multiplayer.player.joined", name);
         server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
         String[] skin = getSkin(name);
-        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
+        GameProfile profile = makeProfileWithSkin(name, skin);
         ServerPlayer fake = new ServerPlayer(server, server.overworld(), profile, playerList.getFirst().clientInformation());
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
@@ -196,7 +198,7 @@ public class CommonClass{
         server.getPlayerList().broadcastSystemMessage(joinMsg.copy().withStyle(ChatFormatting.YELLOW), false);
 
         String[] skin = getSkin(name);
-        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
+        GameProfile profile = makeProfileWithSkin(name, skin);
         ServerPlayer fake = new ServerPlayer(server, server.overworld(), profile, server.getPlayerList().getPlayers().getFirst().clientInformation());
 
         fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
@@ -230,8 +232,10 @@ public class CommonClass{
 
         // create fake player
         String[] skin = getSkin(name);
-        GameProfile profile = makeProfileWithSkin(name, skin[0], skin[1]);
+        GameProfile profile = makeProfileWithSkin(name, skin);
         ServerPlayer fake = new ServerPlayer(server, level, profile, target.clientInformation());
+        // set this early, some mods (polymer) need it during the line of sight check
+        fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
 
         // remove nametag
         if(hideNameTag){
@@ -242,6 +246,9 @@ public class CommonClass{
                 hideTagTeam.setNameTagVisibility(Team.Visibility.NEVER);
             }
             scoreboard.addPlayerToTeam(name, hideTagTeam);
+        }
+        else {
+            removeFromNoTags(level.getScoreboard(), name);
         }
 
         Optional<BlockPos> spawnOpt = findValidSpawnPos(level, fake, target, radius, true);
@@ -270,7 +277,6 @@ public class CommonClass{
         fake.setYRot(yRot);
         fake.setYHeadRot(yRot);
 
-        fake.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), fake, CommonListenerCookie.createInitial(profile, false));
         ServerEntity wrapper = getServerEntity(target, level, fake);
         int lifeTime = 24000;
         FAKE_PLAYERS.put(fake, lifeTime);
@@ -463,10 +469,10 @@ public class CommonClass{
 
         for (BlockPos pos : allBlocksInRadius) {
             if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(new BlockPos(pos));
         }
 
@@ -503,10 +509,10 @@ public class CommonClass{
 
         for (BlockPos pos : allBlocksInRadius) {
             if(pos.closerToCenterThan(playerPos.getCenter(), minRadius)) continue;
-            if (canSeeBlock(target, pos)) continue;
             if (!level.isEmptyBlock(pos)) continue;
             if (!level.getFluidState(pos).isEmpty()) continue;
             if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) continue;
+            if (canSeeBlock(target, pos)) continue;
             candidates.add(new BlockPos(pos));
         }
 
@@ -517,7 +523,7 @@ public class CommonClass{
 
         if (level.getBlockEntity(finalPos) instanceof SkullBlockEntity head) {
             String[] skin = getSkin(name);
-            GameProfile gameProfile = makeProfileWithSkin(name, skin[0], skin[1]);
+            GameProfile gameProfile = makeProfileWithSkin(name, skin);
             ResolvableProfile profile = ResolvableProfile.createResolved(gameProfile);
 
             ItemStack stack = new ItemStack(Items.PLAYER_HEAD);
@@ -548,6 +554,14 @@ public class CommonClass{
     }
 
     // ------HELPER METHODS------
+
+    // teams go by name so a real player with the same name would keep a hidden nametag forever
+    public static void removeFromNoTags(Scoreboard scoreboard, String name){
+        PlayerTeam team = scoreboard.getPlayersTeam(name);
+        if(team != null && team.getName().equals("noTags"))
+            scoreboard.removePlayerFromTeam(name);
+    }
+
     private static @NotNull ServerEntity getServerEntity(ServerPlayer target, ServerLevel level, ServerPlayer fake) {
         ServerGamePacketListenerImpl conn = target.connection;
         ServerEntity wrapper = new ServerEntity(level, fake, 0, false, new ServerEntity.Synchronizer() {
@@ -571,12 +585,13 @@ public class CommonClass{
         return wrapper;
     }
 
-    static GameProfile makeProfileWithSkin(String name, String valueB64, String signature) {
+    static GameProfile makeProfileWithSkin(String name, String[] skin) {
         UUID id = UUID.randomUUID();
 
         // Build a PropertyMap up-front (profile.properties() is immutable in 1.21.9)
         Multimap<String, Property> mm = ArrayListMultimap.create();
-        mm.put("textures", new Property("textures", valueB64, signature));
+        if(skin != null)
+            mm.put("textures", new Property("textures", skin[0], skin[1]));
         PropertyMap props = new PropertyMap(mm);
 
         // Prefer the 3-arg ctor if present; otherwise reflectively set the field
@@ -600,6 +615,7 @@ public class CommonClass{
     }
 
     public static boolean chanceOneIn(int denominator){
+        if(denominator <= 0) return false;
         return safeRandomRange(denominator) == 0;
     }
 
@@ -622,23 +638,34 @@ public class CommonClass{
     }
 
     private static String[] getSkin(String name){
+        if(SKINS.containsKey(name)) return SKINS.get(name);
         try {
             URL profileUrl = new URL("https://api.mojang.com/users/profiles/minecraft/" + name);
-            InputStreamReader inputStreamReaderProfile = new InputStreamReader(profileUrl.openStream());
+            URLConnection profileConnection = profileUrl.openConnection();
+            profileConnection.setConnectTimeout(2000);
+            profileConnection.setReadTimeout(2000);
+            InputStreamReader inputStreamReaderProfile = new InputStreamReader(profileConnection.getInputStream());
             String uuid = new JsonParser().parse(inputStreamReaderProfile).getAsJsonObject().get("id").getAsString();
 
             URL userSession = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid + "?unsigned=false");
-            InputStreamReader inputStreamReaderSession = new InputStreamReader(userSession.openStream());
+            URLConnection sessionConnection = userSession.openConnection();
+            sessionConnection.setConnectTimeout(2000);
+            sessionConnection.setReadTimeout(2000);
+            InputStreamReader inputStreamReaderSession = new InputStreamReader(sessionConnection.getInputStream());
             JsonObject property = new JsonParser().parse(inputStreamReaderSession).getAsJsonObject().get("properties").getAsJsonArray().get(0).getAsJsonObject();
 
-            return new String[]{
+            String[] skin = new String[]{
                     property.get("value").getAsString(),
                     property.get("signature").getAsString()
             };
+            SKINS.put(name, skin);
+            return skin;
         }
         catch (Exception e) {
             Constants.LOG.info("Couldn't find player{}, the fake player is going to use the default skin", name);
             Constants.LOG.warn(String.valueOf(e));
+            // stops it looping forever when mojang is down
+            if(name.equals("MarsThePlanet_")) return null;
             return getSkin("MarsThePlanet_");
         }
     }
@@ -669,11 +696,11 @@ public class CommonClass{
                     if(!level.isEmptyBlock(candidate)) continue;
                     if(!level.isEmptyBlock(candidate.above())) continue;
                     if(!level.getBlockState(candidate.below()).canOcclude()) continue;
-                    if(target.getOnPos() == candidate) continue;
-                    if(target.getOnPos().east() == candidate) continue;
-                    if(target.getOnPos().north() == candidate) continue;
-                    if(target.getOnPos().south() == candidate) continue;
-                    if(target.getOnPos().west() == candidate) continue;
+                    if(target.getOnPos().equals(candidate)) continue;
+                    if(target.getOnPos().east().equals(candidate)) continue;
+                    if(target.getOnPos().north().equals(candidate)) continue;
+                    if(target.getOnPos().south().equals(candidate)) continue;
+                    if(target.getOnPos().west().equals(candidate)) continue;
                     fake.setPos(candidate.getX(), candidate.getY(), candidate.getZ());
                     if(lineOfSight != fake.hasLineOfSight(target)) continue;
 

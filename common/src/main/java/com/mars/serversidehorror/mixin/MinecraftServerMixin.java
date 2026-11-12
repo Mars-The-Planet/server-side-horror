@@ -17,6 +17,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.storage.ChunkIOErrorReporter;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
@@ -27,6 +28,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +102,9 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_BROKEN.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
-                level.destroyBlock(target, true);
+                BlockState state = level.getBlockState(target);
+                if(state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH))
+                    level.destroyBlock(target, true);
                 TORCHES_TO_BE_BROKEN.remove(target);
                 last_torch_breaking = 10;
             }
@@ -113,10 +117,15 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
                 Map.Entry<BlockPos, ServerPlayer> nextTorch = TORCHES_TO_BE_REPLACED.entrySet().iterator().next();
                 ServerLevel level = nextTorch.getValue().level();
                 BlockPos target = nextTorch.getKey();
-                if(level.getBlockState(target).is(Blocks.WALL_TORCH))
-                    level.setBlock(target, Blocks.REDSTONE_WALL_TORCH.withPropertiesOf(level.getBlockState(target)), 3);
-                else
-                    level.setBlock(target, Blocks.REDSTONE_TORCH.defaultBlockState(), 3);
+                BlockState state = level.getBlockState(target);
+                // torch might have been broken or swapped since it was queued
+                if(state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
+                    if(state.is(Blocks.WALL_TORCH))
+                        level.setBlock(target, Blocks.REDSTONE_WALL_TORCH.withPropertiesOf(state), 3);
+                    else
+                        level.setBlock(target, Blocks.REDSTONE_TORCH.defaultBlockState(), 3);
+                    level.playSound(null, target, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1f, 0.8f);
+                }
                 level.playSound(null, target, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 1f, 0.8f);
                 TORCHES_TO_BE_REPLACED.remove(target);
                 last_torch_replaced = 10;
@@ -165,7 +174,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         // adds a fake player to the tab with a fake join msg
         if (fake_joiner_enable && chanceOneIn(fake_joiner_chance)) {
             SavedDataHorror savedData = SavedDataHorror.get(self);
-            List<String> playerNames = savedData.getSeenPlayers();
+            List<String> playerNames = new ArrayList<>(savedData.getSeenPlayers());
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!playerNames.isEmpty()) {
                 addFakeJoiner(self, playerNames.get(safeRandomRange(playerNames.size())), true);
@@ -175,7 +184,7 @@ public abstract class MinecraftServerMixin extends ReentrantBlockableEventLoop<T
         // adds a fake player to the tab with a fake join msg from the config
         if (random_fake_joiner_enable && chanceOneIn(random_fake_joiner_chance)) {
             SavedDataHorror savedData = SavedDataHorror.get(self);
-            List<String> playerNames = savedData.getSeenPlayers();
+            List<String> playerNames = new ArrayList<>(savedData.getSeenPlayers());
             playerNames.removeAll(List.of((self).getPlayerList().getPlayerNamesArray()));
             if (!random_fake_joiner_list.isEmpty()) {
                 String[] name_msg = random_fake_joiner_list.get(safeRandomRange(random_fake_joiner_list.size())).split(";");
